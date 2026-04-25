@@ -12,6 +12,7 @@ import {
   Settings,
   Wallet,
   BrainCircuit,
+  Clock3,
 } from 'lucide-react';
 
 const gruposMenu = [
@@ -33,6 +34,19 @@ const gruposMenu = [
     label: 'Financeiro',
     icon: Wallet,
     itens: [{ to: '/pagamentos', label: 'Pagamentos', icon: CreditCard }],
+  },
+  {
+    tipo: 'dropdown',
+    label: 'Relatórios',
+    icon: FileText,
+    itens: [
+      { to: '/relatorios/minutos', label: 'Minutos atendidos', icon: Clock3 },
+      {
+        to: '/relatorios/pagamentos',
+        label: 'Relatório de pagamentos',
+        icon: CreditCard,
+      },
+    ],
   },
   {
     tipo: 'dropdown',
@@ -96,7 +110,7 @@ function DropdownMenu({ grupo }) {
         <ChevronDown className="h-3.5 w-3.5" />
       </button>
 
-      <div className="invisible absolute left-0 top-9 min-w-48 rounded-md border border-gray-200 bg-white p-1.5 text-gray-700 opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
+      <div className="invisible absolute left-0 top-9 min-w-56 rounded-md border border-gray-200 bg-white p-1.5 text-gray-700 opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
         {grupo.itens.map((item) => (
           <NavLink
             key={item.to}
