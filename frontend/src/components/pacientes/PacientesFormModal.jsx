@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { User, HeartPulse, Phone } from 'lucide-react';
+import {
+  User,
+  HeartPulse,
+  Phone,
+} from 'lucide-react';
 
 function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
   const [nome, setNome] = useState('');
@@ -35,24 +39,30 @@ function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
       setAlergias(pacienteEditando.alergias || '');
       setDoencasPreExistentes(pacienteEditando.doencasPreExistentes || '');
       setNomeContatoEmergencia(pacienteEditando.nomeContatoEmergencia || '');
-      setTelefoneContatoEmergencia(pacienteEditando.telefoneContatoEmergencia || '');
+      setTelefoneContatoEmergencia(
+        pacienteEditando.telefoneContatoEmergencia || ''
+      );
     } else {
-      setNome('');
-      setCpf('');
-      setTelefone('');
-      setEmail('');
-      setEndereco('');
-      setDataNascimento('');
-      setSexo('');
-      setTipoSanguineo('');
-      setAlergias('');
-      setDoencasPreExistentes('');
-      setNomeContatoEmergencia('');
-      setTelefoneContatoEmergencia('');
+      limparCampos();
     }
   }, [isOpen, pacienteEditando]);
 
-  const handleSubmit = (e) => {
+  function limparCampos() {
+    setNome('');
+    setCpf('');
+    setTelefone('');
+    setEmail('');
+    setEndereco('');
+    setDataNascimento('');
+    setSexo('');
+    setTipoSanguineo('');
+    setAlergias('');
+    setDoencasPreExistentes('');
+    setNomeContatoEmergencia('');
+    setTelefoneContatoEmergencia('');
+  }
+
+  function handleSubmit(e) {
     e.preventDefault();
 
     const paciente = {
@@ -75,54 +85,40 @@ function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
     }
 
     onSalvar(paciente);
-  };
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" size="lg">
-      <div className="h-full flex flex-col">
-        <div className="mb-2">
-          <div className="text-[10px] text-gray-500 mb-0.5">
-            Dashboard <span className="mx-1">{'>'}</span> Pacientes <span className="mx-1">{'>'}</span>
+      <div className="flex h-[82vh] flex-col overflow-hidden">
+        <div className="mb-2 shrink-0">
+          <div className="mb-0.5 text-[10px] text-gray-500">
+            Dashboard &gt; Pacientes &gt;{' '}
             <span className="font-semibold text-blue-600">
-              {pacienteEditando ? 'Editar Cadastro' : 'Novo Cadastro'}
+              {pacienteEditando ? 'Editar' : 'Novo'}
             </span>
           </div>
 
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 leading-tight">
-            Cadastro de Pacientes
+          <h2 className="text-lg font-semibold text-gray-900">
+            Cadastro de Paciente
           </h2>
 
-          <p className="text-[11px] text-gray-500 mt-0.5">
+          <p className="text-[11px] text-gray-500">
             {pacienteEditando
               ? 'Atualize as informações do paciente.'
-              : 'Preencha os dados abaixo para cadastrar um novo paciente.'}
+              : 'Preencha os dados para cadastrar.'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
-            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
-              <h3 className="text-sm sm:text-base font-semibold text-gray-800">
-                {pacienteEditando ? 'Editar Cadastro de Paciente' : 'Novo Cadastro de Paciente'}
-              </h3>
-            </div>
-
-            <div className="p-3 space-y-3 flex-1 min-h-0 overflow-y-auto">
-              <section>
-                <div className="flex items-center gap-2 mb-2">
-                  <User className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-xs sm:text-sm font-semibold text-gray-800">
-                    1. Dados Pessoais
-                  </h4>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+              <Section icon={User} title="Dados pessoais">
+                <div className="grid grid-cols-2 gap-1.3">
                   <Campo
-                    label="Nome Completo"
+                    label="Nome"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     required
-                    placeholder="Ex: Maria Souza"
                   />
 
                   <Campo
@@ -130,7 +126,6 @@ function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
                     value={cpf}
                     onChange={(e) => setCpf(e.target.value)}
                     required
-                    placeholder="Ex: 12345678900"
                   />
 
                   <Campo
@@ -138,7 +133,6 @@ function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
                     required
-                    placeholder="Ex: (48) 99999-9999"
                   />
 
                   <Campo
@@ -146,132 +140,93 @@ function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="Ex: paciente@email.com"
                   />
 
                   <Campo
-                    label="Data de Nascimento"
+                    label="Nascimento"
                     type="date"
                     value={dataNascimento}
                     onChange={(e) => setDataNascimento(e.target.value)}
-                    required
                   />
 
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
-                      Sexo
-                    </label>
-                    <select
-                      value={sexo}
-                      onChange={(e) => setSexo(e.target.value)}
-                      className="w-full h-9 border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Outro">Outro</option>
-                      <option value="Prefiro não informar">Prefiro não informar</option>
-                    </select>
-                  </div>
+                  <Select
+                    label="Sexo"
+                    value={sexo}
+                    onChange={setSexo}
+                    options={[
+                      'Feminino',
+                      'Masculino',
+                      'Outro',
+                      'Prefiro não informar',
+                    ]}
+                  />
 
-                  <div className="md:col-span-2 xl:col-span-3">
+                  <div className="col-span-2">
                     <Campo
                       label="Endereço"
                       value={endereco}
                       onChange={(e) => setEndereco(e.target.value)}
-                      placeholder="Ex: Rua das Flores, 123"
                     />
                   </div>
                 </div>
-              </section>
+              </Section>
 
-              <section>
-                <div className="flex items-center gap-2 mb-2">
-                  <HeartPulse className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-xs sm:text-sm font-semibold text-gray-800">
-                    2. Informações Médicas
-                  </h4>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
-                      Tipo Sanguíneo
-                    </label>
-                    <select
-                      value={tipoSanguineo}
-                      onChange={(e) => setTipoSanguineo(e.target.value)}
-                      className="w-full h-9 border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione</option>
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                    </select>
-                  </div>
+              <Section icon={HeartPulse} title="Informações médicas">
+                <div className="grid grid-cols-3 gap-2">
+                  <Select
+                    label="Tipo sanguíneo"
+                    value={tipoSanguineo}
+                    onChange={setTipoSanguineo}
+                    options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']}
+                  />
 
                   <Campo
                     label="Alergias"
                     value={alergias}
                     onChange={(e) => setAlergias(e.target.value)}
-                    placeholder="Ex: Penicilina, poeira..."
                   />
 
                   <Campo
-                    label="Doenças Pré-existentes"
+                    label="Doenças"
                     value={doencasPreExistentes}
                     onChange={(e) => setDoencasPreExistentes(e.target.value)}
-                    placeholder="Ex: Diabetes, hipertensão..."
                   />
                 </div>
-              </section>
+              </Section>
 
-              <section>
-                <div className="flex items-center gap-2 mb-2">
-                  <Phone className="w-4 h-4 text-blue-600" />
-                  <h4 className="text-xs sm:text-sm font-semibold text-gray-800">
-                    3. Contato de Emergência
-                  </h4>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <Section icon={Phone} title="Contato de emergência">
+                <div className="grid grid-cols-2 gap-2">
                   <Campo
-                    label="Nome do Contato"
+                    label="Nome"
                     value={nomeContatoEmergencia}
                     onChange={(e) => setNomeContatoEmergencia(e.target.value)}
-                    placeholder="Ex: João Souza"
                   />
 
                   <Campo
-                    label="Telefone do Contato"
+                    label="Telefone"
                     value={telefoneContatoEmergencia}
-                    onChange={(e) => setTelefoneContatoEmergencia(e.target.value)}
-                    placeholder="Ex: (48) 99999-9999"
+                    onChange={(e) =>
+                      setTelefoneContatoEmergencia(e.target.value)
+                    }
                   />
                 </div>
-              </section>
+              </Section>
             </div>
 
-            <div className="px-3 py-2.5 border-t border-gray-200 bg-gray-50 flex justify-end gap-2 shrink-0 sticky bottom-0">
+            <div className="flex shrink-0 justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-300 hover:bg-gray-400 rounded-md transition-colors"
+                className="rounded-md bg-gray-300 px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-400"
               >
                 Cancelar
               </button>
 
               <button
                 type="submit"
-                className="px-4 py-2 text-xs sm:text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                className="rounded-md bg-green-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-green-700"
               >
-                {pacienteEditando ? 'Salvar Cadastro' : 'Cadastrar Paciente'}
+                {pacienteEditando ? 'Salvar' : 'Cadastrar'}
               </button>
             </div>
           </div>
@@ -281,18 +236,23 @@ function PacienteFormModal({ isOpen, onClose, pacienteEditando, onSalvar }) {
   );
 }
 
-function Campo({
-  label,
-  type = 'text',
-  value,
-  onChange,
-  required = false,
-  placeholder = '',
-  ...props
-}) {
+function Section({ icon: Icon, title, children }) {
+  return (
+    <section className="mb-0.3 first:mb-2">
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-blue-600" />
+        <h4 className="text-sm font-semibold text-gray-800">{title}</h4>
+      </div>
+
+      {children}
+    </section>
+  );
+}
+
+function Campo({ label, type = 'text', value, onChange, required = false }) {
   return (
     <div>
-      <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+      <label className="mb-1 block text-[11px] font-medium text-gray-600">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
 
@@ -301,10 +261,31 @@ function Campo({
         value={value}
         onChange={onChange}
         required={required}
-        placeholder={placeholder}
-        className="w-full h-9 border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-        {...props}
+        className="h-8 w-full rounded-md border border-gray-300 px-2 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options }) {
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] font-medium text-gray-600">
+        {label}
+      </label>
+
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 w-full rounded-md border border-gray-300 px-3 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="">Selecione</option>
+        {options.map((opcao) => (
+          <option key={opcao} value={opcao}>
+            {opcao}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

@@ -216,6 +216,45 @@ namespace MeuCrud.Api.Migrations
                     b.ToTable("Pacientes");
                 });
 
+            modelBuilder.Entity("MeuCrud.Api.Models.Pagamento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ConsultaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DataPagamento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FormaPagamento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Observacoes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("StatusPagamento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConsultaId")
+                        .IsUnique();
+
+                    b.ToTable("Pagamentos");
+                });
+
             modelBuilder.Entity("MeuCrud.Api.Models.Prontuario", b =>
                 {
                     b.Property<int>("Id")
@@ -292,6 +331,17 @@ namespace MeuCrud.Api.Migrations
                     b.Navigation("Paciente");
                 });
 
+            modelBuilder.Entity("MeuCrud.Api.Models.Pagamento", b =>
+                {
+                    b.HasOne("MeuCrud.Api.Models.Consulta", "Consulta")
+                        .WithOne("Pagamento")
+                        .HasForeignKey("MeuCrud.Api.Models.Pagamento", "ConsultaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Consulta");
+                });
+
             modelBuilder.Entity("MeuCrud.Api.Models.Prontuario", b =>
                 {
                     b.HasOne("MeuCrud.Api.Models.Consulta", "Consulta")
@@ -305,6 +355,8 @@ namespace MeuCrud.Api.Migrations
 
             modelBuilder.Entity("MeuCrud.Api.Models.Consulta", b =>
                 {
+                    b.Navigation("Pagamento");
+
                     b.Navigation("Prontuario");
                 });
 

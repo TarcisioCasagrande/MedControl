@@ -7,6 +7,7 @@ import ProntuariosPage from './components/prontuarios/ProntuariosPage';
 import DashboardPage from './components/dashboard/DashboardPage';
 import AssistenteIaPage from './components/assistente-ia/AssistenteIaPage';
 import AgendaPage from './components/agenda/AgendaPage';
+import PagamentosPage from './components/pagamentos/PagamentosPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/pacientes" element={<PacientesPage />} />
         <Route path="/consultas" element={<ConsultasPage />} />
         <Route path="/agenda" element={<AgendaPage />} />
+        <Route path="/pagamentos" element={<PagamentosPage />} />
         <Route path="/prontuarios" element={<ProntuariosPage />} />
         <Route path="/assistente-ia" element={<AssistenteIaPage />} />
       </Route>

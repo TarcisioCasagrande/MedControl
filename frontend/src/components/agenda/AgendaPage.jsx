@@ -18,7 +18,10 @@ import {
   Activity,
   Square,
   Hash,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from 'lucide-react';
+
 import {
   getConsultas,
   atualizarConsulta,
@@ -26,13 +29,17 @@ import {
   iniciarAtendimento,
   finalizarAtendimento,
 } from '../../services/consultaService';
+
 import { getMedicos } from '../../services/medicoService';
 import { getPacientes } from '../../services/pacienteService';
+
 import {
   criarProntuario,
   atualizarProntuario,
 } from '../../services/prontuarioService';
+
 import { useToast } from '../../hooks/useToast';
+
 import ConsultaFormModal from '../consultas/ConsultasFormModal';
 import ConsultaDeleteDialog from '../consultas/ConsultasDeleteDialog';
 import ProntuarioFormModal from '../prontuarios/ProntuariosFormModal';
@@ -42,6 +49,8 @@ function AgendaPage() {
   const [medicos, setMedicos] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [painelAberto, setPainelAberto] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('');
@@ -65,7 +74,7 @@ function AgendaPage() {
     carregarDados();
   }, []);
 
-  const carregarDados = async () => {
+  async function carregarDados() {
     try {
       setLoading(true);
 
@@ -84,14 +93,14 @@ function AgendaPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleEditar = (consulta) => {
+  function handleEditar(consulta) {
     setConsultaEditando(consulta);
     setIsFormModalOpen(true);
-  };
+  }
 
-  const handleSalvar = async (consulta) => {
+  async function handleSalvar(consulta) {
     try {
       await atualizarConsulta(consulta);
       toast.success('Consulta atualizada com sucesso!');
@@ -104,14 +113,14 @@ function AgendaPage() {
       toast.error(mensagem);
       console.error(error);
     }
-  };
+  }
 
-  const handleConfirmarDelete = (consulta) => {
+  function handleConfirmarDelete(consulta) {
     setConsultaDeletando(consulta);
     setIsDeleteDialogOpen(true);
-  };
+  }
 
-  const handleDeletar = async () => {
+  async function handleDeletar() {
     try {
       await deletarConsulta(consultaDeletando.id);
       toast.success('Consulta removida com sucesso!');
@@ -124,9 +133,9 @@ function AgendaPage() {
       toast.error(mensagem);
       console.error(error);
     }
-  };
+  }
 
-  const handleAtualizarStatus = async (consulta, novoStatus) => {
+  async function handleAtualizarStatus(consulta, novoStatus) {
     try {
       setStatusLoadingId(consulta.id);
 
@@ -168,9 +177,9 @@ function AgendaPage() {
     } finally {
       setStatusLoadingId(null);
     }
-  };
+  }
 
-  const handleIniciarAtendimento = async (consulta) => {
+  async function handleIniciarAtendimento(consulta) {
     try {
       setStatusLoadingId(consulta.id);
 
@@ -193,9 +202,9 @@ function AgendaPage() {
     } finally {
       setStatusLoadingId(null);
     }
-  };
+  }
 
-  const handleFinalizarAtendimento = async (consulta) => {
+  async function handleFinalizarAtendimento(consulta) {
     try {
       setStatusLoadingId(consulta.id);
 
@@ -218,15 +227,15 @@ function AgendaPage() {
     } finally {
       setStatusLoadingId(null);
     }
-  };
+  }
 
-  const handleAbrirProntuario = (consulta) => {
+  function handleAbrirProntuario(consulta) {
     setConsultaSelecionada(consulta);
     setProntuarioEditando(consulta.prontuario || null);
     setIsProntuarioModalOpen(true);
-  };
+  }
 
-  const handleSalvarProntuario = async (prontuario) => {
+  async function handleSalvarProntuario(prontuario) {
     try {
       if (prontuarioEditando) {
         await atualizarProntuario(prontuario);
@@ -246,7 +255,7 @@ function AgendaPage() {
       toast.error(mensagem);
       console.error(error);
     }
-  };
+  }
 
   const consultasFiltradas = useMemo(() => {
     return (consultas || []).filter((consulta) => {
@@ -284,9 +293,7 @@ function AgendaPage() {
       .forEach((consulta) => {
         const chave = formatarDataInput(consulta.dataConsulta);
 
-        if (!grupos[chave]) {
-          grupos[chave] = [];
-        }
+        if (!grupos[chave]) grupos[chave] = [];
 
         grupos[chave].push(consulta);
       });
@@ -321,177 +328,217 @@ function AgendaPage() {
       finalizadas: finalizadas.length,
       emAndamento: emAndamento.length,
       pendentes: pendentes.length,
+      filtradas: consultasFiltradas.length,
     };
-  }, [consultas]);
+  }, [consultas, consultasFiltradas]);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-blue-600" />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Agenda</h1>
-            <p className="text-sm text-gray-500">
-              Visualize e gerencie consultas organizadas por dia
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={carregarDados}
-          className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
-          title="Atualizar agenda"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <ResumoCard
-          titulo="Total de Consultas"
-          valor={resumo.total}
-          descricao="Consultas registradas"
-          icon={CalendarDays}
-          cor="blue"
-        />
-        <ResumoCard
-          titulo="Consultas Hoje"
-          valor={resumo.hoje}
-          descricao="Agendadas para hoje"
-          icon={Clock3}
-          cor="amber"
-        />
-        <ResumoCard
-          titulo="Em andamento"
-          valor={resumo.emAndamento}
-          descricao="Atendimentos iniciados"
-          icon={Activity}
-          cor="cyan"
-        />
-        <ResumoCard
-          titulo="Finalizadas"
-          valor={resumo.finalizadas}
-          descricao="Consultas encerradas"
-          icon={BadgeCheck}
-          cor="green"
-        />
-        <ResumoCard
-          titulo="Pendentes"
-          valor={resumo.pendentes}
-          descricao="Aguardando atendimento"
-          icon={Filter}
-          cor="violet"
-        />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por ID, médico, paciente ou status..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
-
-          <select
-            value={statusFiltro}
-            onChange={(e) => setStatusFiltro(e.target.value)}
-            className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+    <div className="h-[calc(100vh-44px)] overflow-hidden bg-gray-100 p-4">
+      <div
+        className={`grid h-full gap-3 transition-all duration-300 ${
+          painelAberto ? 'grid-cols-[290px_1fr]' : 'grid-cols-[56px_1fr]'
+        }`}
+      >
+        <aside className="flex min-h-0 flex-col gap-3">
+          <button
+            onClick={() => setPainelAberto((prev) => !prev)}
+            className="flex h-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-blue-600 shadow-sm transition hover:bg-blue-50"
+            title={painelAberto ? 'Fechar painel' : 'Abrir painel'}
+            type="button"
           >
-            <option value="">Todos os status</option>
-            <option value="Agendada">Agendada</option>
-            <option value="Pendente">Pendente</option>
-            <option value="EmAndamento">Em andamento</option>
-            <option value="Finalizada">Finalizada</option>
-            <option value="Cancelada">Cancelada</option>
-          </select>
+            {painelAberto ? (
+              <PanelLeftClose className="h-5 w-5" />
+            ) : (
+              <PanelLeftOpen className="h-5 w-5" />
+            )}
+          </button>
 
-          <select
-            value={medicoFiltro}
-            onChange={(e) => setMedicoFiltro(e.target.value)}
-            className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          >
-            <option value="">Todos os médicos</option>
-            {medicos.map((medico) => (
-              <option key={medico.id} value={medico.id}>
-                {medico.nome}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="date"
-            value={dataFiltro}
-            onChange={(e) => setDataFiltro(e.target.value)}
-            className="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          />
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="flex items-center justify-center py-20 bg-white rounded-xl border border-gray-200">
-          <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
-          <span className="ml-3 text-gray-500">Carregando agenda...</span>
-        </div>
-      ) : consultasAgrupadas.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 py-16 text-center">
-          <CalendarDays className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-sm font-medium text-gray-500">
-            Nenhuma consulta encontrada para os filtros informados.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {consultasAgrupadas.map(([data, consultasDoDia]) => (
-            <div
-              key={data}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-            >
-              <div className="px-5 py-4 border-b border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-base font-semibold text-gray-900">
-                      {formatarDataBonita(data)}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {consultasDoDia.length}{' '}
-                      {consultasDoDia.length === 1 ? 'consulta' : 'consultas'}
-                    </p>
+          {painelAberto && (
+            <>
+              <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                    <CalendarDays className="h-5 w-5 text-blue-600" />
                   </div>
 
-                  <div className="inline-flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">
-                    <CalendarDays className="w-4 h-4" />
-                    Agenda do dia
+                  <div>
+                    <h1 className="text-lg font-bold text-gray-900">Agenda</h1>
+                    <p className="text-xs text-gray-500">Controle dos atendimentos</p>
                   </div>
                 </div>
+
+                <button
+                  onClick={carregarDados}
+                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition hover:bg-blue-700"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Atualizar agenda
+                </button>
               </div>
 
-              <div className="divide-y divide-gray-100">
-                {consultasDoDia.map((consulta) => (
-                  <AgendaItem
-                    key={consulta.id}
-                    consulta={consulta}
-                    onEditar={handleEditar}
-                    onDeletar={handleConfirmarDelete}
-                    onAtualizarStatus={handleAtualizarStatus}
-                    onIniciarAtendimento={handleIniciarAtendimento}
-                    onFinalizarAtendimento={handleFinalizarAtendimento}
-                    onProntuario={handleAbrirProntuario}
-                    statusLoadingId={statusLoadingId}
+              <div className="grid grid-cols-2 gap-2">
+                <MiniResumo titulo="Total" valor={resumo.total} icon={CalendarDays} cor="blue" />
+                <MiniResumo titulo="Hoje" valor={resumo.hoje} icon={Clock3} cor="amber" />
+                <MiniResumo titulo="Andamento" valor={resumo.emAndamento} icon={Activity} cor="cyan" />
+                <MiniResumo titulo="Finalizadas" valor={resumo.finalizadas} icon={BadgeCheck} cor="green" />
+                <MiniResumo titulo="Pendentes" valor={resumo.pendentes} icon={Filter} cor="violet" />
+                <MiniResumo titulo="Filtradas" valor={resumo.filtradas} icon={Search} cor="blue" />
+              </div>
+
+              <div className="min-h-0 flex-1 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="mb-3 flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-blue-600" />
+                  <h2 className="text-sm font-semibold text-gray-800">Filtros</h2>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+                    <input
+                      type="text"
+                      placeholder="Buscar..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="h-9 w-full rounded-lg border border-gray-300 pl-10 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <select
+                    value={statusFiltro}
+                    onChange={(e) => setStatusFiltro(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Todos os status</option>
+                    <option value="Agendada">Agendada</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="EmAndamento">Em andamento</option>
+                    <option value="Finalizada">Finalizada</option>
+                    <option value="Cancelada">Cancelada</option>
+                  </select>
+
+                  <select
+                    value={medicoFiltro}
+                    onChange={(e) => setMedicoFiltro(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Todos os médicos</option>
+                    {medicos.map((medico) => (
+                      <option key={medico.id} value={medico.id}>
+                        {medico.nome}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="date"
+                    value={dataFiltro}
+                    onChange={(e) => setDataFiltro(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-gray-300 bg-white px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   />
+
+                  {(searchTerm || statusFiltro || medicoFiltro || dataFiltro) && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFiltro('');
+                        setMedicoFiltro('');
+                        setDataFiltro('');
+                      }}
+                      className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-600 transition hover:bg-gray-100"
+                    >
+                      Limpar filtros
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </aside>
+
+        <main className="min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">
+                Consultas da agenda
+              </h2>
+              <p className="text-xs text-gray-500">
+                {consultasFiltradas.length}{' '}
+                {consultasFiltradas.length === 1 ? 'consulta encontrada' : 'consultas encontradas'}
+              </p>
+            </div>
+
+            {!painelAberto && (
+              <button
+                onClick={carregarDados}
+                className="flex h-8 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition hover:bg-blue-700"
+                type="button"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Atualizar
+              </button>
+            )}
+          </div>
+
+          <div className="h-[calc(100%-57px)] overflow-auto bg-gray-50 p-3">
+            {loading ? (
+              <div className="flex h-full items-center justify-center rounded-xl border border-gray-200 bg-white">
+                <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
+                <span className="ml-3 text-sm text-gray-500">Carregando agenda...</span>
+              </div>
+            ) : consultasAgrupadas.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center rounded-xl border border-gray-200 bg-white text-center">
+                <CalendarDays className="mb-3 h-12 w-12 text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">
+                  Nenhuma consulta encontrada para os filtros informados.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {consultasAgrupadas.map(([data, consultasDoDia]) => (
+                  <section
+                    key={data}
+                    className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+                  >
+                    <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          {formatarDataBonita(data)}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {consultasDoDia.length}{' '}
+                          {consultasDoDia.length === 1 ? 'consulta' : 'consultas'}
+                        </p>
+                      </div>
+
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        Agenda do dia
+                      </span>
+                    </div>
+
+                    <div className="divide-y divide-gray-100">
+                      {consultasDoDia.map((consulta) => (
+                        <AgendaLinha
+                          key={consulta.id}
+                          consulta={consulta}
+                          onEditar={handleEditar}
+                          onDeletar={handleConfirmarDelete}
+                          onAtualizarStatus={handleAtualizarStatus}
+                          onIniciarAtendimento={handleIniciarAtendimento}
+                          onFinalizarAtendimento={handleFinalizarAtendimento}
+                          onProntuario={handleAbrirProntuario}
+                          statusLoadingId={statusLoadingId}
+                        />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            )}
+          </div>
+        </main>
+      </div>
 
       <ConsultaFormModal
         isOpen={isFormModalOpen}
@@ -531,7 +578,7 @@ function AgendaPage() {
   );
 }
 
-function AgendaItem({
+function AgendaLinha({
   consulta,
   onEditar,
   onDeletar,
@@ -544,211 +591,195 @@ function AgendaItem({
   const carregandoStatus = statusLoadingId === consulta.id;
   const temProntuario = !!consulta.prontuario;
   const statusNormalizado = normalizarStatus(consulta.status);
-  const dataInicioAtendimento = obterDataInicioAtendimento(consulta);
-  const dataFimAtendimento = obterDataFimAtendimento(consulta);
 
   const podeIniciarAtendimento = podeIniciarConsulta(statusNormalizado);
   const podeFinalizarAtendimento = statusNormalizado === 'emandamento';
-  const mostrarBotaoFinalizada = !ehStatusFinal(statusNormalizado) && statusNormalizado !== 'emandamento';
+  const mostrarBotaoFinalizada =
+    !ehStatusFinal(statusNormalizado) && statusNormalizado !== 'emandamento';
   const mostrarBotaoCancelada = !ehStatusFinal(statusNormalizado);
-  const mostrarBotaoPendente = !ehStatusFinal(statusNormalizado) && statusNormalizado !== 'emandamento';
+  const mostrarBotaoPendente =
+    !ehStatusFinal(statusNormalizado) && statusNormalizado !== 'emandamento';
 
-  const duracao = calcularDuracao(dataInicioAtendimento, dataFimAtendimento);
+  const dataInicio = obterDataInicioAtendimento(consulta);
+  const dataFim = obterDataFimAtendimento(consulta);
+  const duracao = calcularDuracao(dataInicio, dataFim);
 
   return (
-    <div className="p-5 hover:bg-gray-50 transition-colors">
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
-            <Clock3 className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
-              Horário
-            </p>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold text-gray-900">
-                {formatarHora(consulta.dataConsulta)}
-              </p>
-
-              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
-                <Hash className="w-3 h-3" />
-                {consulta.id}
-              </span>
-            </div>
-
-            <StatusBadge status={consulta.status} />
-
-            {dataInicioAtendimento && (
-              <p className="mt-2 text-xs text-cyan-700 font-medium">
-                Iniciado às {formatarHora(dataInicioAtendimento)}
-              </p>
-            )}
-
-            {dataFimAtendimento && (
-              <p className="mt-1 text-xs text-green-700 font-medium">
-                Finalizado às {formatarHora(dataFimAtendimento)}
-              </p>
-            )}
-
-            {duracao && (
-              <p className="mt-1 text-xs text-gray-600 font-medium">
-                Duração: {duracao}
-              </p>
-            )}
-          </div>
+    <div className="grid grid-cols-[90px_1.2fr_1.2fr_115px_1fr_250px] items-center gap-3 px-4 py-3 text-xs transition hover:bg-gray-50">
+      <div>
+        <div className="flex items-center gap-1.5">
+          <Clock3 className="h-4 w-4 text-blue-500" />
+          <span className="font-bold text-gray-900">
+            {formatarHora(consulta.dataConsulta)}
+          </span>
         </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0">
-            <UserRound className="w-5 h-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
-              Paciente
-            </p>
-            <p className="text-sm font-medium text-gray-900">
-              {consulta.paciente?.nome || 'Não informado'}
-            </p>
-          </div>
+        <div className="mt-1 inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+          <Hash className="h-3 w-3" />
+          {consulta.id}
         </div>
+      </div>
 
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center shrink-0">
-            <Stethoscope className="w-5 h-5 text-violet-600" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
-              Médico
-            </p>
-            <p className="text-sm font-medium text-gray-900">
-              {consulta.medico?.nome || 'Não informado'}
-            </p>
-          </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-gray-400">
+          <UserRound className="h-3.5 w-3.5" />
+          Paciente
         </div>
+        <p className="truncate font-semibold text-gray-800">
+          {consulta.paciente?.nome || 'Não informado'}
+        </p>
+      </div>
 
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase text-gray-400">
+          <Stethoscope className="h-3.5 w-3.5" />
+          Médico
+        </div>
+        <p className="truncate font-semibold text-gray-800">
+          {consulta.medico?.nome || 'Não informado'}
+        </p>
+      </div>
+
+      <div>
+        <StatusBadge status={consulta.status} />
+
+        <p className="mt-1 font-bold text-green-600">
+          {formatarMoeda(consulta.valorCobrado)}
+        </p>
+      </div>
+
+      <div className="min-w-0">
+        {dataInicio && (
+          <p className="truncate text-[11px] font-medium text-cyan-700">
+            Início: {formatarHora(dataInicio)}
+          </p>
+        )}
+
+        {dataFim && (
+          <p className="truncate text-[11px] font-medium text-green-700">
+            Fim: {formatarHora(dataFim)}
+          </p>
+        )}
+
+        {duracao && (
+          <p className="truncate text-[11px] font-medium text-gray-600">
+            Duração: {duracao}
+          </p>
+        )}
+
+        {!dataInicio && !dataFim && !duracao && (
+          <p className="truncate text-[11px] text-gray-400">
+            Atendimento não iniciado
+          </p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap justify-end gap-1.5">
+        <button
+          onClick={() => onProntuario(consulta)}
+          className={`inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition ${
+            temProntuario
+              ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+              : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
+          }`}
+          title={temProntuario ? 'Ver prontuário' : 'Criar prontuário'}
+        >
+          <FileText className="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          onClick={() => onEditar(consulta)}
+          className="inline-flex h-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-2 text-blue-700 transition hover:bg-blue-100"
+          title="Editar"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          onClick={() => onDeletar(consulta)}
+          className="inline-flex h-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-2 text-red-700 transition hover:bg-red-100"
+          title="Excluir"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+
+        {podeIniciarAtendimento && (
+          <button
+            onClick={() => onIniciarAtendimento(consulta)}
+            disabled={carregandoStatus}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-cyan-600 px-2 text-white transition hover:bg-cyan-700 disabled:opacity-50"
+            title="Iniciar atendimento"
+          >
+            <Play className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {podeFinalizarAtendimento && (
+          <button
+            onClick={() => onFinalizarAtendimento(consulta)}
+            disabled={carregandoStatus}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-slate-700 px-2 text-white transition hover:bg-slate-800 disabled:opacity-50"
+            title="Finalizar atendimento"
+          >
+            <Square className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {mostrarBotaoFinalizada && (
+          <button
+            onClick={() => onAtualizarStatus(consulta, 'Finalizada')}
+            disabled={carregandoStatus}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-green-600 px-2 text-white transition hover:bg-green-700 disabled:opacity-50"
+            title="Marcar como finalizada"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {mostrarBotaoCancelada && (
+          <button
+            onClick={() => onAtualizarStatus(consulta, 'Cancelada')}
+            disabled={carregandoStatus}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-red-600 px-2 text-white transition hover:bg-red-700 disabled:opacity-50"
+            title="Cancelar consulta"
+          >
+            <XCircle className="h-3.5 w-3.5" />
+          </button>
+        )}
+
+        {mostrarBotaoPendente && (
+          <button
+            onClick={() => onAtualizarStatus(consulta, 'Pendente')}
+            disabled={carregandoStatus}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-amber-500 px-2 text-white transition hover:bg-amber-600 disabled:opacity-50"
+            title="Marcar como pendente"
+          >
+            <Hourglass className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MiniResumo({ titulo, valor, icon: Icon, cor }) {
+  const cores = {
+    blue: 'border-blue-200 bg-blue-50 text-blue-700',
+    amber: 'border-amber-200 bg-amber-50 text-amber-700',
+    green: 'border-green-200 bg-green-50 text-green-700',
+    violet: 'border-violet-200 bg-violet-50 text-violet-700',
+    cyan: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+  };
+
+  return (
+    <div className={`rounded-lg border px-3 py-2 shadow-sm ${cores[cor] || cores.blue}`}>
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-1">
-            Valor
-          </p>
-          <p className="text-sm font-semibold text-green-600">
-            {consulta.valorCobrado !== undefined && consulta.valorCobrado !== null
-              ? new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                }).format(Number(consulta.valorCobrado))
-              : '—'}
-          </p>
-
-          <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mt-3 mb-1">
-            Observações
-          </p>
-          <p className="text-sm text-gray-600">
-            {consulta.observacoes || 'Sem observações'}
-          </p>
+          <p className="text-[11px] font-semibold text-gray-600">{titulo}</p>
+          <h3 className="text-xl font-bold leading-none">{valor}</h3>
         </div>
 
-        <div className="space-y-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">
-              Ações rápidas
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => onProntuario(consulta)}
-                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition ${
-                  temProntuario
-                    ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                    : 'border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                {temProntuario ? 'Ver prontuário' : 'Criar prontuário'}
-              </button>
-
-              <button
-                onClick={() => onEditar(consulta)}
-                className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                Editar
-              </button>
-
-              <button
-                onClick={() => onDeletar(consulta)}
-                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-100"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Excluir
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">
-              Alterar status
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              {podeIniciarAtendimento && (
-                <button
-                  onClick={() => onIniciarAtendimento(consulta)}
-                  disabled={carregandoStatus}
-                  className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
-                >
-                  <Play className="w-3.5 h-3.5" />
-                  Iniciar atendimento
-                </button>
-              )}
-
-              {podeFinalizarAtendimento && (
-                <button
-                  onClick={() => onFinalizarAtendimento(consulta)}
-                  disabled={carregandoStatus}
-                  className="inline-flex items-center gap-2 rounded-lg bg-slate-700 px-3 py-2 text-xs font-medium text-white transition hover:bg-slate-800 disabled:opacity-50"
-                >
-                  <Square className="w-3.5 h-3.5" />
-                  Finalizar atendimento
-                </button>
-              )}
-
-              {mostrarBotaoFinalizada && (
-                <button
-                  onClick={() => onAtualizarStatus(consulta, 'Finalizada')}
-                  disabled={carregandoStatus}
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-green-700 disabled:opacity-50"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Finalizada
-                </button>
-              )}
-
-              {mostrarBotaoCancelada && (
-                <button
-                  onClick={() => onAtualizarStatus(consulta, 'Cancelada')}
-                  disabled={carregandoStatus}
-                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  Cancelada
-                </button>
-              )}
-
-              {mostrarBotaoPendente && (
-                <button
-                  onClick={() => onAtualizarStatus(consulta, 'Pendente')}
-                  disabled={carregandoStatus}
-                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-amber-600 disabled:opacity-50"
-                >
-                  <Hourglass className="w-3.5 h-3.5" />
-                  Pendente
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <Icon className="h-4 w-4" />
       </div>
     </div>
   );
@@ -768,60 +799,12 @@ function StatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-medium ${
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
         estilos[valor] || estilos['Sem status']
       }`}
     >
       {valor}
     </span>
-  );
-}
-
-function ResumoCard({ titulo, valor, descricao, icon: Icon, cor }) {
-  const cores = {
-    blue: {
-      box: 'bg-blue-50 border-blue-200',
-      icon: 'bg-blue-100 text-blue-600',
-      value: 'text-blue-900',
-    },
-    amber: {
-      box: 'bg-amber-50 border-amber-200',
-      icon: 'bg-amber-100 text-amber-600',
-      value: 'text-amber-900',
-    },
-    green: {
-      box: 'bg-green-50 border-green-200',
-      icon: 'bg-green-100 text-green-600',
-      value: 'text-green-900',
-    },
-    violet: {
-      box: 'bg-violet-50 border-violet-200',
-      icon: 'bg-violet-100 text-violet-600',
-      value: 'text-violet-900',
-    },
-    cyan: {
-      box: 'bg-cyan-50 border-cyan-200',
-      icon: 'bg-cyan-100 text-cyan-600',
-      value: 'text-cyan-900',
-    },
-  };
-
-  const estilo = cores[cor] || cores.blue;
-
-  return (
-    <div className={`rounded-xl border p-4 shadow-sm ${estilo.box}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-gray-600">{titulo}</p>
-          <h3 className={`mt-2 text-2xl font-bold ${estilo.value}`}>{valor}</h3>
-          <p className="mt-1 text-xs text-gray-500">{descricao}</p>
-        </div>
-
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${estilo.icon}`}>
-          <Icon className="w-5 h-5" />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -840,6 +823,7 @@ function formatarHora(data) {
   if (!data) return '—';
 
   const d = new Date(data);
+
   return d.toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
@@ -856,6 +840,15 @@ function formatarDataBonita(dataString) {
     month: 'long',
     year: 'numeric',
   });
+}
+
+function formatarMoeda(valor) {
+  if (valor === undefined || valor === null) return '—';
+
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(Number(valor));
 }
 
 function normalizarStatus(status) {
@@ -893,10 +886,13 @@ function formatarLabelStatus(status) {
   const valor = normalizarStatus(status);
 
   if (valor === 'emandamento') return 'Em andamento';
-  if (valor === 'finalizada' || valor === 'realizada' || valor === 'concluida') return 'Finalizada';
+  if (valor === 'finalizada' || valor === 'realizada' || valor === 'concluida') {
+    return 'Finalizada';
+  }
   if (valor === 'agendada') return 'Agendada';
   if (valor === 'pendente') return 'Pendente';
   if (valor === 'cancelada') return 'Cancelada';
+
   return 'Sem status';
 }
 

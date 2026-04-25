@@ -9,15 +9,18 @@ import {
   Clock3,
   Stethoscope,
 } from 'lucide-react';
+
 import {
   getConsultas,
   criarConsulta,
   atualizarConsulta,
   deletarConsulta,
 } from '../../services/consultaService';
+
 import { getMedicos } from '../../services/medicoService';
 import { getPacientes } from '../../services/pacienteService';
 import { useToast } from '../../hooks/useToast';
+
 import ConsultaTable from './ConsultasTable';
 import ConsultaFormModal from './ConsultasFormModal';
 import ConsultaDeleteDialog from './ConsultasDeleteDialog';
@@ -50,7 +53,7 @@ function ConsultasPage() {
     carregarDados();
   }, []);
 
-  const carregarDados = async () => {
+  async function carregarDados() {
     try {
       setLoading(true);
 
@@ -69,24 +72,24 @@ function ConsultasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleNovo = () => {
+  function handleNovo() {
     setConsultaEditando(null);
     setIsFormModalOpen(true);
-  };
+  }
 
-  const handleVisualizar = (consulta) => {
+  function handleVisualizar(consulta) {
     setConsultaVisualizando(consulta);
     setIsViewModalOpen(true);
-  };
+  }
 
-  const handleEditar = (consulta) => {
+  function handleEditar(consulta) {
     setConsultaEditando(consulta);
     setIsFormModalOpen(true);
-  };
+  }
 
-  const handleSalvar = async (consulta) => {
+  async function handleSalvar(consulta) {
     try {
       if (consultaEditando) {
         await atualizarConsulta(consulta);
@@ -106,14 +109,14 @@ function ConsultasPage() {
       toast.error(mensagem);
       console.error(error);
     }
-  };
+  }
 
-  const handleConfirmarDelete = (consulta) => {
+  function handleConfirmarDelete(consulta) {
     setConsultaDeletando(consulta);
     setIsDeleteDialogOpen(true);
-  };
+  }
 
-  const handleDeletar = async () => {
+  async function handleDeletar() {
     try {
       await deletarConsulta(consultaDeletando.id);
       toast.success('Consulta removida com sucesso!');
@@ -130,14 +133,14 @@ function ConsultasPage() {
       toast.error(mensagem);
       console.error(error);
     }
-  };
+  }
 
-  const handleAbrirBulkDeleteModal = () => {
+  function handleAbrirBulkDeleteModal() {
     if (selecionados.length === 0) return;
     setIsBulkDeleteModalOpen(true);
-  };
+  }
 
-  const handleExcluirSelecionados = async () => {
+  async function handleExcluirSelecionados() {
     if (selecionados.length === 0) return;
 
     try {
@@ -209,7 +212,7 @@ function ConsultasPage() {
     } finally {
       setBulkDeleting(false);
     }
-  };
+  }
 
   const consultasFiltradas = useMemo(() => {
     const termo = searchTerm.toLowerCase().trim();
@@ -248,139 +251,145 @@ function ConsultasPage() {
   }).length;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-blue-600" />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Consultas</h1>
-            <p className="text-sm text-gray-500">
-              Gerencie consultas, seleções em lote e novos agendamentos
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={carregarDados}
-            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
-            title="Recarregar lista"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-
-          {selecionados.length > 0 && (
-            <button
-              onClick={handleAbrirBulkDeleteModal}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              Excluir ({selecionados.length})
-            </button>
-          )}
-
-          <button
-            onClick={handleNovo}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nova Consulta
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <ResumoCard
-          titulo="Total de Consultas"
-          valor={totalConsultas}
-          descricao="Consultas cadastradas"
-          icon={CalendarDays}
-          cor="blue"
-        />
-        <ResumoCard
-          titulo="Filtradas"
-          valor={consultasFiltradas.length}
-          descricao="Resultado da busca atual"
-          icon={Search}
-          cor="amber"
-        />
-        <ResumoCard
-          titulo="Hoje"
-          valor={consultasHoje}
-          descricao="Consultas do dia"
-          icon={Clock3}
-          cor="violet"
-        />
-        <ResumoCard
-          titulo="Selecionadas"
-          valor={totalSelecionados}
-          descricao="Itens marcados em lote"
-          icon={BadgeCheck}
-          cor="green"
-        />
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar por ID, paciente, médico, status ou data..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Stethoscope className="w-4 h-4 text-blue-500" />
-              <span>
-                {consultasFiltradas.length}{' '}
-                {consultasFiltradas.length === 1 ? 'consulta encontrada' : 'consultas encontradas'}
-              </span>
+    <div className="h-[calc(100vh-44px)] overflow-hidden bg-gray-100 p-4">
+      <div className="grid h-full grid-rows-[auto_auto_auto_1fr] gap-3">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
+              <CalendarDays className="h-5 w-5 text-blue-600" />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Consultas</h1>
+              <p className="text-xs text-gray-500">
+                Gerencie consultas, agenda e seleções em lote
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={carregarDados}
+              className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-100"
+              title="Recarregar lista"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </button>
+
+            {selecionados.length > 0 && (
+              <button
+                onClick={handleAbrirBulkDeleteModal}
+                className="flex h-9 items-center gap-2 rounded-lg bg-red-600 px-3 text-xs font-semibold text-white transition hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir ({selecionados.length})
+              </button>
+            )}
+
+            <button
+              onClick={handleNovo}
+              className="flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              Nova Consulta
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          <ResumoCard
+            titulo="Consultas"
+            valor={totalConsultas}
+            descricao="Cadastradas"
+            icon={CalendarDays}
+            cor="blue"
+          />
+
+          <ResumoCard
+            titulo="Filtradas"
+            valor={consultasFiltradas.length}
+            descricao="Resultado atual"
+            icon={Search}
+            cor="amber"
+          />
+
+          <ResumoCard
+            titulo="Hoje"
+            valor={consultasHoje}
+            descricao="Consultas do dia"
+            icon={Clock3}
+            cor="violet"
+          />
+
+          <ResumoCard
+            titulo="Selecionadas"
+            valor={totalSelecionados}
+            descricao="Em lote"
+            icon={BadgeCheck}
+            cor="green"
+          />
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+
+              <input
+                type="text"
+                placeholder="Buscar por ID, paciente, médico, status ou data..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-9 w-full rounded-lg border border-gray-300 pl-10 pr-4 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex h-9 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-600">
+              <Stethoscope className="mr-2 h-4 w-4 text-blue-500" />
+
+              {consultasFiltradas.length}{' '}
+              {consultasFiltradas.length === 1
+                ? 'consulta encontrada'
+                : 'consultas encontradas'}
+
               {totalEmAndamento > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700">
-                  <Clock3 className="w-3.5 h-3.5" />
+                <span className="ml-3 inline-flex items-center gap-1 rounded-full bg-cyan-100 px-2 py-1 text-[11px] font-medium text-cyan-700">
+                  <Clock3 className="h-3 w-3" />
                   {totalEmAndamento} em andamento
                 </span>
               )}
 
               {totalSelecionados > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                  <BadgeCheck className="w-3.5 h-3.5" />
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-[11px] font-medium text-blue-700">
+                  <BadgeCheck className="h-3 w-3" />
                   {totalSelecionados} selecionada{totalSelecionados > 1 ? 's' : ''}
                 </span>
               )}
             </div>
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-20 bg-white rounded-xl border border-gray-200">
-          <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
-          <span className="ml-3 text-gray-500">Carregando consultas...</span>
+        <div className="min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
+              <span className="ml-3 text-sm text-gray-500">Carregando consultas...</span>
+            </div>
+          ) : (
+            <div className="h-full overflow-auto">
+              <ConsultaTable
+                consultas={consultasFiltradas}
+                onVisualizar={handleVisualizar}
+                onEditar={handleEditar}
+                onDeletar={handleConfirmarDelete}
+                selecionados={selecionados}
+                setSelecionados={setSelecionados}
+              />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <ConsultaTable
-            consultas={consultasFiltradas}
-            onVisualizar={handleVisualizar}
-            onEditar={handleEditar}
-            onDeletar={handleConfirmarDelete}
-            selecionados={selecionados}
-            setSelecionados={setSelecionados}
-          />
-        </div>
-      )}
+      </div>
 
       <ConsultaFormModal
         isOpen={isFormModalOpen}
@@ -458,16 +467,28 @@ function ResumoCard({ titulo, valor, descricao, icon: Icon, cor }) {
   const estilo = cores[cor] || cores.blue;
 
   return (
-    <div className={`rounded-xl border p-4 shadow-sm ${estilo.box}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-gray-600">{titulo}</p>
-          <h3 className={`mt-2 text-2xl font-bold ${estilo.value}`}>{valor}</h3>
-          <p className="mt-1 text-xs text-gray-500">{descricao}</p>
+    <div className={`rounded-lg border px-3 py-2 shadow-sm ${estilo.box}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className={`text-xl font-bold leading-none ${estilo.value}`}>
+              {valor}
+            </h3>
+
+            <p className="truncate text-xs font-semibold text-gray-700">
+              {titulo}
+            </p>
+          </div>
+
+          <p className="mt-1 truncate text-[11px] leading-none text-gray-500">
+            {descricao}
+          </p>
         </div>
 
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${estilo.icon}`}>
-          <Icon className="w-5 h-5" />
+        <div
+          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${estilo.icon}`}
+        >
+          <Icon className="h-4 w-4" />
         </div>
       </div>
     </div>

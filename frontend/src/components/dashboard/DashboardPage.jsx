@@ -7,11 +7,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   CartesianGrid,
-  Legend,
+  Cell,
 } from 'recharts';
 import {
   Stethoscope,
@@ -19,70 +16,81 @@ import {
   CalendarDays,
   FileText,
   Wallet,
-  Activity,
-  ShieldPlus,
-  Clock3,
+  RefreshCw,
+  Filter,
   CircleDollarSign,
 } from 'lucide-react';
 
-const CORES_TIPO = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
-const CORES_STATUS = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+const CORES = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
 function DashboardPage() {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [filtroStatus, setFiltroStatus] = useState('Todos');
+  const [filtroTipo, setFiltroTipo] = useState('Todos');
 
   useEffect(() => {
-    carregar();
+    carregarDashboard();
   }, []);
 
-  const carregar = async () => {
+  async function carregarDashboard() {
     try {
       setCarregando(true);
-      const res = await getDashboard();
-      setDados(res);
+      const resposta = await getDashboard();
+      setDados(resposta);
     } catch (error) {
       console.error('Erro ao carregar dashboard:', error);
     } finally {
       setCarregando(false);
     }
-  };
+  }
 
-  const resumo = useMemo(() => {
-    if (!dados) return null;
-
-    const totalStatus = (dados.consultasPorStatus || []).reduce(
-      (acc, item) => acc + (item.total || 0),
-      0
-    );
-
-    const statusMaisFrequente =
-      (dados.consultasPorStatus || []).length > 0
-        ? [...dados.consultasPorStatus].sort((a, b) => (b.total || 0) - (a.total || 0))[0]
-        : null;
-
-    const tipoMaisFrequente =
-      (dados.consultasPorTipo || []).length > 0
-        ? [...dados.consultasPorTipo].sort((a, b) => (b.total || 0) - (a.total || 0))[0]
-        : null;
-
-    const ticketMedio =
-      dados.totalConsultas && dados.totalConsultas > 0
-        ? Number(dados.faturamentoTotal || 0) / Number(dados.totalConsultas || 1)
-        : 0;
-
-    return {
-      totalStatus,
-      statusMaisFrequente,
-      tipoMaisFrequente,
-      ticketMedio,
-    };
+  const statusOptions = useMemo(() => {
+    if (!dados) return ['Todos'];
+    return ['Todos', ...(dados.consultasPorStatus || []).map((item) => item.status)];
   }, [dados]);
+
+  const tipoOptions = useMemo(() => {
+    if (!dados) return ['Todos'];
+    return ['Todos', ...(dados.consultasPorTipo || []).map((item) => item.tipo)];
+  }, [dados]);
+
+  const consultasPorStatusFiltradas = useMemo(() => {
+    if (!dados) return [];
+
+    if (filtroStatus === 'Todos') return dados.consultasPorStatus || [];
+
+    return (dados.consultasPorStatus || []).filter(
+      (item) => item.status === filtroStatus
+    );
+  }, [dados, filtroStatus]);
+
+  const consultasPorTipoFiltradas = useMemo(() => {
+    if (!dados) return [];
+
+    if (filtroTipo === 'Todos') return dados.consultasPorTipo || [];
+
+    return (dados.consultasPorTipo || []).filter(
+      (item) => item.tipo === filtroTipo
+    );
+  }, [dados, filtroTipo]);
+
+  const ticketMedio = useMemo(() => {
+    if (!dados || !dados.totalConsultas) return 0;
+    return Number(dados.faturamentoTotal || 0) / Number(dados.totalConsultas);
+  }, [dados]);
+
+  function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  }
 
   if (carregando || !dados) {
     return (
-      <div className="p-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="p-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Carregando dashboard...</p>
         </div>
       </div>
@@ -90,194 +98,145 @@ function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* CABEÇALHO */}
-      <div className="rounded-2xl border border-gray-200 bg-gradient-to-r from-slate-900 to-blue-900 p-6 text-white shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="h-[calc(100vh-44px)] overflow-hidden bg-gray-100 p-4">
+      <div className="grid h-full grid-rows-[auto_auto_auto_1fr] gap-3">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
           <div>
-            <p className="text-sm text-blue-100">Visão geral do sistema</p>
-            <h1 className="mt-1 text-2xl font-bold">Dashboard ControlMed</h1>
-            <p className="mt-2 text-sm text-slate-200">
-              Acompanhe os principais números, faturamento e distribuição das consultas.
+            <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
+            <p className="text-xs text-gray-500">
+              Visão geral dos principais dados do ControlMed
             </p>
           </div>
 
           <button
-            onClick={carregar}
-            className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
+            onClick={carregarDashboard}
+            className="flex h-9 items-center gap-2 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white transition hover:bg-blue-700"
           >
-            <Activity className="h-4 w-4" />
-            Atualizar dashboard
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
           </button>
         </div>
-      </div>
 
-      {/* CARDS PRINCIPAIS */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <CardResumo
-          titulo="Médicos"
-          valor={dados.totalMedicos}
-          icone={Stethoscope}
-          cor="blue"
-          descricao="Profissionais cadastrados"
-        />
+        <div className="grid grid-cols-6 gap-3">
+          <CardResumo
+            titulo="Médicos"
+            valor={dados.totalMedicos}
+            icone={Stethoscope}
+            cor="blue"
+          />
 
-        <CardResumo
-          titulo="Pacientes"
-          valor={dados.totalPacientes}
-          icone={Users}
-          cor="emerald"
-          descricao="Pacientes registrados"
-        />
+          <CardResumo
+            titulo="Pacientes"
+            valor={dados.totalPacientes}
+            icone={Users}
+            cor="green"
+          />
 
-        <CardResumo
-          titulo="Consultas"
-          valor={dados.totalConsultas}
-          icone={CalendarDays}
-          cor="amber"
-          descricao="Consultas no sistema"
-        />
+          <CardResumo
+            titulo="Consultas"
+            valor={dados.totalConsultas}
+            icone={CalendarDays}
+            cor="amber"
+          />
 
-        <CardResumo
-          titulo="Prontuários"
-          valor={dados.totalProntuarios}
-          icone={FileText}
-          cor="violet"
-          descricao="Registros clínicos salvos"
-        />
-      </div>
+          <CardResumo
+            titulo="Prontuários"
+            valor={dados.totalProntuarios}
+            icone={FileText}
+            cor="violet"
+          />
 
-      {/* FAIXA DE DESTAQUES */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <CardDestaque
-          titulo="Faturamento Total"
-          valor={`R$ ${Number(dados.faturamentoTotal || 0).toFixed(2)}`}
-          subtitulo="Valor acumulado registrado nas consultas"
-          icone={Wallet}
-          cor="green"
-        />
+          <CardResumo
+            titulo="Faturamento"
+            valor={formatarMoeda(dados.faturamentoTotal)}
+            icone={Wallet}
+            cor="green"
+            grande
+          />
 
-        <CardDestaque
-          titulo="Ticket Médio"
-          valor={`R$ ${Number(resumo?.ticketMedio || 0).toFixed(2)}`}
-          subtitulo="Média de faturamento por consulta"
-          icone={CircleDollarSign}
-          cor="blue"
-        />
-
-        <CardDestaque
-          titulo="Volume em Status"
-          valor={resumo?.totalStatus || 0}
-          subtitulo="Soma total das consultas categorizadas"
-          icone={ShieldPlus}
-          cor="orange"
-        />
-      </div>
-
-      {/* INSIGHTS */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <InsightCard
-          titulo="Status mais frequente"
-          valor={resumo?.statusMaisFrequente?.status || '—'}
-          detalhe={
-            resumo?.statusMaisFrequente
-              ? `${resumo.statusMaisFrequente.total} consulta(s)`
-              : 'Sem dados disponíveis'
-          }
-          icone={Activity}
-          cor="blue"
-        />
-
-        <InsightCard
-          titulo="Tipo mais comum"
-          valor={resumo?.tipoMaisFrequente?.tipo || '—'}
-          detalhe={
-            resumo?.tipoMaisFrequente
-              ? `${resumo.tipoMaisFrequente.total} atendimento(s)`
-              : 'Sem dados disponíveis'
-          }
-          icone={Clock3}
-          cor="violet"
-        />
-
-        <InsightCard
-          titulo="Base de pacientes"
-          valor={dados.totalPacientes || 0}
-          detalhe="Total disponível para novos agendamentos"
-          icone={Users}
-          cor="emerald"
-        />
-      </div>
-
-      {/* GRÁFICOS */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Consultas por Status</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Distribuição das consultas conforme o status registrado.
-            </p>
-          </div>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dados.consultasPorStatus || []}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="total" name="Total">
-                {(dados.consultasPorStatus || []).map((_, index) => (
-                  <Cell key={`status-${index}`} fill={CORES_STATUS[index % CORES_STATUS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <CardResumo
+            titulo="Ticket Médio"
+            valor={formatarMoeda(ticketMedio)}
+            icone={CircleDollarSign}
+            cor="blue"
+            grande
+          />
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-gray-900">Tipo de Atendimento</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Participação percentual dos tipos de atendimento cadastrados.
-            </p>
+        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+          <div className="mb-2 flex items-center gap-2">
+            <Filter className="h-4 w-4 text-blue-600" />
+            <h2 className="text-sm font-semibold text-gray-800">Filtros</h2>
           </div>
 
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={dados.consultasPorTipo || []}
-                dataKey="total"
-                nameKey="tipo"
-                outerRadius={95}
-                innerRadius={45}
-                paddingAngle={3}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-600">
+                Status
+              </label>
+
+              <select
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value)}
+                className="h-8 w-full rounded-lg border border-gray-300 px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
               >
-                {(dados.consultasPorTipo || []).map((_, index) => (
-                  <Cell key={`tipo-${index}`} fill={CORES_TIPO[index % CORES_TIPO.length]} />
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
                 ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-600">
+                Tipo
+              </label>
+
+              <select
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value)}
+                className="h-8 w-full rounded-lg border border-gray-300 px-3 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                {tipoOptions.map((tipo) => (
+                  <option key={tipo} value={tipo}>
+                    {tipo}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid min-h-0 grid-cols-2 gap-3">
+          <GraficoCard
+            titulo="Consultas por Status"
+            data={consultasPorStatusFiltradas}
+            dataKey="status"
+          />
+
+          <GraficoCard
+            titulo="Consultas por Tipo"
+            data={consultasPorTipoFiltradas}
+            dataKey="tipo"
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function CardResumo({ titulo, valor, icone: Icone, cor, descricao }) {
+function CardResumo({ titulo, valor, icone: Icone, cor, grande }) {
   const estilos = {
     blue: {
       box: 'border-blue-200 bg-blue-50',
       icon: 'bg-blue-100 text-blue-600',
       value: 'text-blue-900',
     },
-    emerald: {
-      box: 'border-emerald-200 bg-emerald-50',
-      icon: 'bg-emerald-100 text-emerald-600',
-      value: 'text-emerald-900',
+    green: {
+      box: 'border-green-200 bg-green-50',
+      icon: 'bg-green-100 text-green-600',
+      value: 'text-green-900',
     },
     amber: {
       box: 'border-amber-200 bg-amber-50',
@@ -294,66 +253,55 @@ function CardResumo({ titulo, valor, icone: Icone, cor, descricao }) {
   const estilo = estilos[cor] || estilos.blue;
 
   return (
-    <div className={`rounded-2xl border p-5 shadow-sm ${estilo.box}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{titulo}</p>
-          <h2 className={`mt-2 text-3xl font-bold ${estilo.value}`}>{valor}</h2>
-          <p className="mt-2 text-xs text-gray-500">{descricao}</p>
+    <div className={`rounded-xl border px-3 py-3 shadow-sm ${estilo.box}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-xs text-gray-600">{titulo}</p>
+          <h2
+            className={`mt-1 truncate font-bold ${estilo.value} ${
+              grande ? 'text-lg' : 'text-2xl'
+            }`}
+          >
+            {valor}
+          </h2>
         </div>
 
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${estilo.icon}`}>
-          <Icone className="h-6 w-6" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CardDestaque({ titulo, valor, subtitulo, icone: Icone, cor }) {
-  const estilos = {
-    green: 'from-emerald-600 to-green-700',
-    blue: 'from-blue-600 to-indigo-700',
-    orange: 'from-amber-500 to-orange-600',
-  };
-
-  return (
-    <div className={`rounded-2xl bg-gradient-to-r ${estilos[cor]} p-5 text-white shadow-sm`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-white/80">{titulo}</p>
-          <h3 className="mt-2 text-3xl font-bold">{valor}</h3>
-          <p className="mt-2 text-sm text-white/80">{subtitulo}</p>
-        </div>
-
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
-          <Icone className="h-6 w-6" />
+        <div
+          className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${estilo.icon}`}
+        >
+          <Icone className="h-4 w-4" />
         </div>
       </div>
     </div>
   );
 }
 
-function InsightCard({ titulo, valor, detalhe, icone: Icone, cor }) {
-  const estilos = {
-    blue: 'text-blue-600 bg-blue-100',
-    emerald: 'text-emerald-600 bg-emerald-100',
-    violet: 'text-violet-600 bg-violet-100',
-  };
-
+function GraficoCard({ titulo, data, dataKey }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-gray-500">{titulo}</p>
-          <h4 className="mt-2 text-xl font-bold text-gray-900">{valor}</h4>
-          <p className="mt-2 text-sm text-gray-500">{detalhe}</p>
-        </div>
+    <div className="min-h-0 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <h3 className="mb-2 text-sm font-semibold text-gray-900">{titulo}</h3>
 
-        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${estilos[cor]}`}>
-          <Icone className="h-5 w-5" />
+      {data.length === 0 ? (
+        <div className="flex h-full min-h-[260px] items-center justify-center rounded-lg bg-gray-50">
+          <p className="text-sm text-gray-500">Nenhum dado encontrado.</p>
         </div>
-      </div>
+      ) : (
+        <div className="h-[calc(100%-28px)] min-h-[260px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey={dataKey} tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip />
+              <Bar dataKey="total" name="Total" radius={[6, 6, 0, 0]}>
+                {data.map((_, index) => (
+                  <Cell key={index} fill={CORES[index % CORES.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }

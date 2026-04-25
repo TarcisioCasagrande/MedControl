@@ -1,6 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Modal from '../ui/Modal';
-import { CalendarDays, ClipboardList, UserRound } from 'lucide-react';
+import {
+  CalendarDays,
+  ClipboardList,
+  UserRound,
+  Search,
+  Stethoscope,
+  Users,
+  CheckCircle2,
+} from 'lucide-react';
 
 function ConsultaFormModal({
   isOpen,
@@ -18,6 +26,9 @@ function ConsultaFormModal({
   const [valorCobrado, setValorCobrado] = useState('');
   const [medicoId, setMedicoId] = useState('');
   const [pacienteId, setPacienteId] = useState('');
+
+  const [buscaMedico, setBuscaMedico] = useState('');
+  const [buscaPaciente, setBuscaPaciente] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -38,8 +49,27 @@ function ConsultaFormModal({
           ? consultaEditando.valorCobrado
           : ''
       );
-      setMedicoId(consultaEditando.medicoId?.toString() || '');
-      setPacienteId(consultaEditando.pacienteId?.toString() || '');
+
+      const medicoAtualId = consultaEditando.medicoId?.toString() || '';
+      const pacienteAtualId = consultaEditando.pacienteId?.toString() || '';
+
+      setMedicoId(medicoAtualId);
+      setPacienteId(pacienteAtualId);
+
+      const medicoAtual = medicos.find((m) => String(m.id) === medicoAtualId);
+      const pacienteAtual = pacientes.find((p) => String(p.id) === pacienteAtualId);
+
+      setBuscaMedico(
+        medicoAtual
+          ? `${medicoAtual.nome} ${medicoAtual.crm ? `- CRM ${medicoAtual.crm}` : ''}`
+          : consultaEditando.medico?.nome || ''
+      );
+
+      setBuscaPaciente(
+        pacienteAtual
+          ? `${pacienteAtual.nome} ${pacienteAtual.cpf ? `- CPF ${pacienteAtual.cpf}` : ''}`
+          : consultaEditando.paciente?.nome || ''
+      );
     } else {
       setDataConsulta('');
       setStatus('Agendada');
@@ -49,11 +79,84 @@ function ConsultaFormModal({
       setValorCobrado('');
       setMedicoId('');
       setPacienteId('');
+      setBuscaMedico('');
+      setBuscaPaciente('');
     }
-  }, [isOpen, consultaEditando]);
+  }, [isOpen, consultaEditando, medicos, pacientes]);
+
+  const medicosFiltrados = useMemo(() => {
+    const termo = buscaMedico.toLowerCase().trim();
+
+    if (!termo || medicoId) return [];
+
+    return medicos
+      .filter((medico) => {
+        return (
+          (medico.nome || '').toLowerCase().includes(termo) ||
+          (medico.crm || '').toLowerCase().includes(termo) ||
+          (medico.especialidade || '').toLowerCase().includes(termo)
+        );
+      })
+      .slice(0, 8);
+  }, [buscaMedico, medicoId, medicos]);
+
+  const pacientesFiltrados = useMemo(() => {
+    const termo = buscaPaciente.toLowerCase().trim();
+
+    if (!termo || pacienteId) return [];
+
+    return pacientes
+      .filter((paciente) => {
+        return (
+          (paciente.nome || '').toLowerCase().includes(termo) ||
+          (paciente.cpf || '').toLowerCase().includes(termo) ||
+          (paciente.telefone || '').toLowerCase().includes(termo) ||
+          (paciente.email || '').toLowerCase().includes(termo)
+        );
+      })
+      .slice(0, 8);
+  }, [buscaPaciente, pacienteId, pacientes]);
+
+  const medicoSelecionado = useMemo(() => {
+    return medicos.find((medico) => String(medico.id) === String(medicoId));
+  }, [medicos, medicoId]);
+
+  const pacienteSelecionado = useMemo(() => {
+    return pacientes.find((paciente) => String(paciente.id) === String(pacienteId));
+  }, [pacientes, pacienteId]);
+
+  function selecionarMedico(medico) {
+    setMedicoId(String(medico.id));
+    setBuscaMedico(`${medico.nome} ${medico.crm ? `- CRM ${medico.crm}` : ''}`);
+  }
+
+  function selecionarPaciente(paciente) {
+    setPacienteId(String(paciente.id));
+    setBuscaPaciente(`${paciente.nome} ${paciente.cpf ? `- CPF ${paciente.cpf}` : ''}`);
+  }
+
+  function limparMedico() {
+    setMedicoId('');
+    setBuscaMedico('');
+  }
+
+  function limparPaciente() {
+    setPacienteId('');
+    setBuscaPaciente('');
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!medicoId) {
+      alert('Selecione um médico.');
+      return;
+    }
+
+    if (!pacienteId) {
+      alert('Selecione um paciente.');
+      return;
+    }
 
     const consulta = {
       dataConsulta: new Date(dataConsulta).toISOString(),
@@ -78,7 +181,8 @@ function ConsultaFormModal({
       <div className="h-full flex flex-col">
         <div className="mb-2">
           <div className="text-[10px] text-gray-500 mb-0.5">
-            Dashboard <span className="mx-1">{'>'}</span> Consultas <span className="mx-1">{'>'}</span>
+            Dashboard <span className="mx-1">{'>'}</span> Consultas{' '}
+            <span className="mx-1">{'>'}</span>
             <span className="font-semibold text-blue-600">
               {consultaEditando ? 'Editar Cadastro' : 'Novo Cadastro'}
             </span>
@@ -99,12 +203,13 @@ function ConsultaFormModal({
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
             <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
               <h3 className="text-sm sm:text-base font-semibold text-gray-800">
-                {consultaEditando ? 'Editar Cadastro de Consulta' : 'Novo Cadastro de Consulta'}
+                {consultaEditando
+                  ? 'Editar Cadastro de Consulta'
+                  : 'Novo Cadastro de Consulta'}
               </h3>
             </div>
 
             <div className="p-3 space-y-3 flex-1 min-h-0 overflow-y-auto">
-              {/* 1. Dados da Consulta */}
               <section>
                 <div className="flex items-center gap-2 mb-2">
                   <CalendarDays className="w-4 h-4 text-blue-600" />
@@ -132,7 +237,9 @@ function ConsultaFormModal({
                       className="w-full h-9 border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="Agendada">Agendada</option>
-                      <option value="Concluída">Concluída</option>
+                      <option value="Pendente">Pendente</option>
+                      <option value="EmAndamento">Em andamento</option>
+                      <option value="Finalizada">Finalizada</option>
                       <option value="Cancelada">Cancelada</option>
                     </select>
                   </div>
@@ -173,7 +280,6 @@ function ConsultaFormModal({
                 </div>
               </section>
 
-              {/* 2. Vínculos */}
               <section>
                 <div className="flex items-center gap-2 mb-2">
                   <UserRound className="w-4 h-4 text-blue-600" />
@@ -183,47 +289,40 @@ function ConsultaFormModal({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
-                      Médico
-                    </label>
-                    <select
-                      value={medicoId}
-                      onChange={(e) => setMedicoId(e.target.value)}
-                      required
-                      className="w-full h-9 border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione</option>
-                      {medicos.map((medico) => (
-                        <option key={medico.id} value={medico.id}>
-                          {medico.nome} - {medico.especialidade}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <BuscaVinculo
+                    label="Médico"
+                    placeholder="Buscar por nome, CRM ou especialidade..."
+                    valorBusca={buscaMedico}
+                    setValorBusca={(valor) => {
+                      setBuscaMedico(valor);
+                      setMedicoId('');
+                    }}
+                    selecionado={medicoSelecionado}
+                    onLimpar={limparMedico}
+                    resultados={medicosFiltrados}
+                    onSelecionar={selecionarMedico}
+                    tipo="medico"
+                    icon={Stethoscope}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
-                      Paciente
-                    </label>
-                    <select
-                      value={pacienteId}
-                      onChange={(e) => setPacienteId(e.target.value)}
-                      required
-                      className="w-full h-9 border border-gray-300 rounded-md px-3 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Selecione</option>
-                      {pacientes.map((paciente) => (
-                        <option key={paciente.id} value={paciente.id}>
-                          {paciente.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <BuscaVinculo
+                    label="Paciente"
+                    placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+                    valorBusca={buscaPaciente}
+                    setValorBusca={(valor) => {
+                      setBuscaPaciente(valor);
+                      setPacienteId('');
+                    }}
+                    selecionado={pacienteSelecionado}
+                    onLimpar={limparPaciente}
+                    resultados={pacientesFiltrados}
+                    onSelecionar={selecionarPaciente}
+                    tipo="paciente"
+                    icon={Users}
+                  />
                 </div>
               </section>
 
-              {/* 3. Observações */}
               <section>
                 <div className="flex items-center gap-2 mb-2">
                   <ClipboardList className="w-4 h-4 text-blue-600" />
@@ -267,6 +366,99 @@ function ConsultaFormModal({
         </form>
       </div>
     </Modal>
+  );
+}
+
+function BuscaVinculo({
+  label,
+  placeholder,
+  valorBusca,
+  setValorBusca,
+  selecionado,
+  onLimpar,
+  resultados,
+  onSelecionar,
+  tipo,
+  icon: Icon,
+}) {
+  return (
+    <div className="relative">
+      <label className="block text-[11px] sm:text-xs font-medium text-gray-700 mb-1">
+        {label} <span className="text-red-500">*</span>
+      </label>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-gray-400" />
+
+        <input
+          type="text"
+          value={valorBusca}
+          onChange={(e) => setValorBusca(e.target.value)}
+          placeholder={placeholder}
+          className="w-full h-9 border border-gray-300 rounded-md pl-9 pr-20 py-2 text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        />
+
+        {selecionado && (
+          <button
+            type="button"
+            onClick={onLimpar}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-red-600 hover:text-red-700"
+          >
+            Limpar
+          </button>
+        )}
+      </div>
+
+      {selecionado && (
+        <div className="mt-1 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-[11px] text-green-700">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          <span className="truncate">
+            Selecionado: {selecionado.nome}
+            {tipo === 'medico' && selecionado.crm ? ` | CRM ${selecionado.crm}` : ''}
+            {tipo === 'paciente' && selecionado.cpf ? ` | CPF ${selecionado.cpf}` : ''}
+          </span>
+        </div>
+      )}
+
+      {!selecionado && valorBusca.trim() && (
+        <div className="absolute z-50 mt-1 max-h-44 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-lg">
+          {resultados.length > 0 ? (
+            resultados.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onSelecionar(item)}
+                className="flex w-full items-start gap-2 border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-blue-50 last:border-b-0"
+              >
+                <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-gray-800">
+                    {item.nome}
+                  </p>
+
+                  {tipo === 'medico' ? (
+                    <p className="truncate text-[11px] text-gray-500">
+                      CRM: {item.crm || 'Não informado'} |{' '}
+                      {item.especialidade || 'Sem especialidade'}
+                    </p>
+                  ) : (
+                    <p className="truncate text-[11px] text-gray-500">
+                      CPF: {item.cpf || 'Não informado'} |{' '}
+                      {item.telefone || item.email || 'Sem contato'}
+                    </p>
+                  )}
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-xs text-gray-500">
+              Nenhum resultado encontrado.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

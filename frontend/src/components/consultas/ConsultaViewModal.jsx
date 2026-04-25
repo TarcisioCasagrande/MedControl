@@ -7,7 +7,10 @@ import {
   Clock3,
   DollarSign,
   ClipboardList,
-  MapPin,
+  Monitor,
+  FileText,
+  PlayCircle,
+  CheckCircle2,
 } from 'lucide-react';
 
 function ConsultaViewModal({ isOpen, onClose, consulta }) {
@@ -18,38 +21,51 @@ function ConsultaViewModal({ isOpen, onClose, consulta }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-5xl rounded-2xl bg-white shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 bg-gray-50">
+      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-5 py-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
+              <CalendarDays className="h-5 w-5 text-blue-600" />
             </div>
 
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-base font-semibold text-gray-900">
                 Visualizar consulta
               </h2>
-              <p className="text-sm text-gray-500">Consulta #{consulta.id}</p>
+              <p className="text-xs text-gray-500">Consulta #{consulta.id}</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+            className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+            type="button"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[85vh] overflow-y-auto">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="min-h-0 flex-1 overflow-y-auto p-5">
+          <div className="mb-4 grid grid-cols-4 gap-3">
             <InfoCard icon={Hash} titulo="ID" valor={`#${consulta.id}`} />
-            <InfoCard icon={CalendarDays} titulo="Data" valor={formatarData(consulta.dataConsulta)} />
-            <InfoCard icon={Clock3} titulo="Horário" valor={formatarHora(consulta.dataConsulta)} />
-            <InfoCard icon={ClipboardList} titulo="Status" valor={formatarStatus(consulta.status)} />
+            <InfoCard
+              icon={CalendarDays}
+              titulo="Data"
+              valor={formatarData(consulta.dataConsulta)}
+            />
+            <InfoCard
+              icon={Clock3}
+              titulo="Horário"
+              valor={formatarHora(consulta.dataConsulta)}
+            />
+            <InfoCard
+              icon={ClipboardList}
+              titulo="Status"
+              valor={formatarStatus(consulta.status)}
+            />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mb-4 grid grid-cols-2 gap-3">
             <InfoCard
               icon={UserRound}
               titulo="Paciente"
@@ -65,26 +81,31 @@ function ConsultaViewModal({ isOpen, onClose, consulta }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InfoBox label="Tipo de atendimento" value={consulta.tipoAtendimento || 'Não informado'} />
+          <div className="mb-4 grid grid-cols-3 gap-3">
             <InfoBox
-              label="Valor cobrado"
-              value={
-                consulta.valorCobrado !== undefined && consulta.valorCobrado !== null
-                  ? new Intl.NumberFormat('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    }).format(Number(consulta.valorCobrado))
-                  : 'Não informado'
-              }
+              icon={Monitor}
+              label="Tipo de atendimento"
+              value={consulta.tipoAtendimento || 'Não informado'}
             />
-            <InfoBox label="Motivo" value={consulta.motivoConsulta || 'Não informado'} />
+
+            <InfoBox
+              icon={DollarSign}
+              label="Valor cobrado"
+              value={formatarMoeda(consulta.valorCobrado)}
+            />
+
+            <InfoBox
+              icon={FileText}
+              label="Motivo"
+              value={consulta.motivoConsulta || 'Não informado'}
+            />
           </div>
 
           <TextoCard titulo="Observações" conteudo={consulta.observacoes} />
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <InfoBox
+              icon={PlayCircle}
               label="Início do atendimento"
               value={
                 consulta.dataInicioAtendimento
@@ -94,6 +115,7 @@ function ConsultaViewModal({ isOpen, onClose, consulta }) {
             />
 
             <InfoBox
+              icon={CheckCircle2}
               label="Fim do atendimento"
               value={
                 consulta.dataFimAtendimento
@@ -104,10 +126,11 @@ function ConsultaViewModal({ isOpen, onClose, consulta }) {
           </div>
         </div>
 
-        <div className="flex justify-end border-t border-gray-200 px-6 py-4 bg-gray-50">
+        <div className="flex justify-end border-t border-gray-200 bg-gray-50 px-5 py-3">
           <button
             onClick={onClose}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            type="button"
           >
             Fechar
           </button>
@@ -119,31 +142,45 @@ function ConsultaViewModal({ isOpen, onClose, consulta }) {
 
 function InfoCard({ icon: Icon, titulo, valor, subtitulo }) {
   return (
-    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center text-blue-700">
-          <Icon className="w-5 h-5" />
+    <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/80 text-blue-700">
+          <Icon className="h-4 w-4" />
         </div>
 
-        <div>
-          <p className="text-xs uppercase tracking-wide font-semibold text-blue-700">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">
             {titulo}
           </p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{valor}</p>
-          {subtitulo && <p className="mt-1 text-xs text-gray-500">{subtitulo}</p>}
+          <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">
+            {valor}
+          </p>
+          {subtitulo && (
+            <p className="mt-0.5 truncate text-[11px] text-gray-500">
+              {subtitulo}
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function InfoBox({ label, value }) {
+function InfoBox({ label, value, icon: Icon }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs uppercase tracking-wide font-semibold text-gray-400">
-        {label}
-      </p>
-      <p className="mt-2 text-sm font-medium text-gray-800">{value}</p>
+    <div className="rounded-xl border border-gray-200 bg-white px-3 py-3">
+      <div className="flex items-start gap-2">
+        {Icon && <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />}
+
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            {label}
+          </p>
+          <p className="mt-1 truncate text-sm font-medium text-gray-800">
+            {value}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -151,12 +188,12 @@ function InfoBox({ label, value }) {
 function TextoCard({ titulo, conteudo }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50">
-      <div className="border-b border-black/5 px-4 py-3">
+      <div className="border-b border-black/5 px-3 py-2">
         <h3 className="text-sm font-semibold text-slate-700">{titulo}</h3>
       </div>
 
-      <div className="px-4 py-4">
-        <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700">
+      <div className="px-3 py-3">
+        <p className="max-h-24 overflow-y-auto whitespace-pre-wrap text-sm leading-5 text-gray-700">
           {conteudo || 'Nenhuma informação registrada.'}
         </p>
       </div>
@@ -171,6 +208,7 @@ function formatarData(data) {
 
 function formatarHora(data) {
   if (!data) return 'Não informado';
+
   return new Date(data).toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
@@ -179,10 +217,20 @@ function formatarHora(data) {
 
 function formatarDataHora(data) {
   if (!data) return 'Não registrado';
+
   return new Date(data).toLocaleString('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
   });
+}
+
+function formatarMoeda(valor) {
+  if (valor === undefined || valor === null) return 'Não informado';
+
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(Number(valor));
 }
 
 function formatarStatus(status) {
@@ -193,7 +241,9 @@ function formatarStatus(status) {
     .trim();
 
   if (valor === 'emandamento') return 'Em andamento';
-  if (valor === 'finalizada' || valor === 'realizada' || valor === 'concluida') return 'Finalizada';
+  if (valor === 'finalizada' || valor === 'realizada' || valor === 'concluida') {
+    return 'Finalizada';
+  }
   if (valor === 'agendada') return 'Agendada';
   if (valor === 'pendente') return 'Pendente';
   if (valor === 'cancelada') return 'Cancelada';

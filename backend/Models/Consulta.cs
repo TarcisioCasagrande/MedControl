@@ -44,5 +44,7 @@ namespace MeuCrud.Api.Models
         public Paciente? Paciente { get; set; }
 
         public Prontuario? Prontuario { get; set; }
+
+        public Pagamento? Pagamento { get; set; }
     }
 }

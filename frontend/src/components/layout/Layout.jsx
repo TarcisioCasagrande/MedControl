@@ -3,13 +3,11 @@ import Sidebar from './Sidebar';
 
 function Layout() {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
       <Sidebar />
 
-      <main className="flex-1 overflow-auto">
-        <div className="min-h-full">
-          <Outlet />
-        </div>
+      <main className="pt-0">
+        <Outlet />
       </main>
     </div>
   );

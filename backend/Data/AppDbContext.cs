@@ -13,6 +13,7 @@ namespace MeuCrud.Api.Data
         public DbSet<Paciente> Pacientes { get; set; }
         public DbSet<Consulta> Consultas { get; set; }
         public DbSet<Prontuario> Prontuarios { get; set; }
+        public DbSet<Pagamento> Pagamentos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,9 +55,31 @@ namespace MeuCrud.Api.Data
                 .HasIndex(p => p.ConsultaId)
                 .IsUnique();
 
+            // 🔗 RELACIONAMENTO: Consulta -> Pagamento (1:1)
+            modelBuilder.Entity<Consulta>()
+                .HasOne(c => c.Pagamento)
+                .WithOne(p => p.Consulta)
+                .HasForeignKey<Pagamento>(p => p.ConsultaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 🔒 Garante 1 pagamento por consulta
+            modelBuilder.Entity<Pagamento>()
+                .HasIndex(p => p.ConsultaId)
+                .IsUnique();
+
+            // 💰 Valor do pagamento
+            modelBuilder.Entity<Pagamento>()
+                .Property(p => p.Valor)
+                .HasColumnType("numeric(10,2)");
+
             // 📅 Tipo correto de data
             modelBuilder.Entity<Consulta>()
                 .Property(c => c.DataConsulta)
+                .HasColumnType("timestamp with time zone");
+
+            // 📅 Tipo correto de data do pagamento
+            modelBuilder.Entity<Pagamento>()
+                .Property(p => p.DataPagamento)
                 .HasColumnType("timestamp with time zone");
 
             // 🚫 BLOQUEIO DE CONFLITO (MÉDICO)
