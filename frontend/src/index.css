@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Animações customizadas */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.fc .fc-non-business {
+  background: rgba(55, 65, 81, 0.35) !important;
+}
+
+.fc .fc-timegrid-slot.fc-non-business {
+  background: rgba(55, 65, 81, 0.45) !important;
+}
+
+.fc .fc-daygrid-day.fc-non-business {
+  background: rgba(55, 65, 81, 0.25) !important;
+}
