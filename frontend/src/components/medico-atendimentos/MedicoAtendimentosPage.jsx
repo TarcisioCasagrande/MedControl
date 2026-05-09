@@ -19,11 +19,13 @@ import {
   getAtendimentosMedicoLogado,
   iniciarAtendimento,
 } from '../../services/agendamentoService';
+
 import {
   atualizarProntuario,
   criarProntuario,
   getProntuarioPorAgendamento,
 } from '../../services/prontuarioService';
+
 import { useToast } from '../../hooks/useToast';
 
 const STATUS_OPTIONS = [
@@ -55,6 +57,7 @@ function MedicoAtendimentosPage() {
   const [busca, setBusca] = useState('');
   const [status, setStatus] = useState('AtendidoRecepcao');
   const [data, setData] = useState(formatarDataInput(new Date()));
+
   const [modalAberto, setModalAberto] = useState(false);
   const [agendamentoSelecionado, setAgendamentoSelecionado] = useState(null);
   const [prontuario, setProntuario] = useState(prontuarioInicial);
@@ -70,10 +73,15 @@ function MedicoAtendimentosPage() {
   async function carregarAtendimentos() {
     try {
       setCarregando(true);
+
       const dados = await getAtendimentosMedicoLogado({ status, data });
-      setAgendamentos(dados || []);
+
+      setAgendamentos(Array.isArray(dados) ? dados : []);
     } catch (error) {
-      toast.error(error?.response?.data?.mensagem || 'Erro ao carregar atendimentos do médico.');
+      toast.error(
+        error?.response?.data?.mensagem ||
+          'Erro ao carregar atendimentos do médico.'
+      );
       console.error(error);
     } finally {
       setCarregando(false);
@@ -83,14 +91,16 @@ function MedicoAtendimentosPage() {
   async function handleIniciar(agendamento) {
     try {
       setProcessandoId(agendamento.id);
+
       await iniciarAtendimento(agendamento.id);
+
       toast.success('Atendimento iniciado.');
-      // Após iniciar, a tela muda para o filtro de atendimentos em andamento.
-      // Isso evita que o card desapareça sem contexto para o médico.
       setStatus('EmAndamento');
       await carregarAtendimentos();
     } catch (error) {
-      toast.error(error?.response?.data?.mensagem || 'Erro ao iniciar atendimento.');
+      toast.error(
+        error?.response?.data?.mensagem || 'Erro ao iniciar atendimento.'
+      );
       console.error(error);
     } finally {
       setProcessandoId(null);
@@ -98,14 +108,30 @@ function MedicoAtendimentosPage() {
   }
 
   async function abrirProntuario(agendamento) {
+    if (!agendamento?.id) {
+      toast.error('Agendamento inválido para abrir prontuário.');
+      return;
+    }
+
     setAgendamentoSelecionado(agendamento);
 
     try {
       const existente = await getProntuarioPorAgendamento(agendamento.id);
+
       setProntuario(normalizarProntuario(existente, agendamento.id));
     } catch (error) {
-      // 404 significa apenas que o prontuário ainda não existe.
-      setProntuario({ ...prontuarioInicial, agendamentoId: agendamento.id });
+      if (error?.response?.status !== 404) {
+        toast.error(
+          error?.response?.data?.mensagem ||
+            'Erro ao buscar prontuário do atendimento.'
+        );
+        console.error(error);
+      }
+
+      setProntuario({
+        ...prontuarioInicial,
+        agendamentoId: agendamento.id,
+      });
     }
 
     setModalAberto(true);
@@ -113,6 +139,7 @@ function MedicoAtendimentosPage() {
 
   function fecharModal() {
     if (salvandoProntuario) return;
+
     setModalAberto(false);
     setAgendamentoSelecionado(null);
     setProntuario(prontuarioInicial);
@@ -125,8 +152,37 @@ function MedicoAtendimentosPage() {
     }));
   }
 
+  function montarPayloadProntuario() {
+    const agendamentoId =
+      Number(prontuario.agendamentoId) ||
+      Number(agendamentoSelecionado?.id) ||
+      0;
+
+    return {
+      id: prontuario.id || 0,
+      agendamentoId,
+      queixaPrincipal: prontuario.queixaPrincipal?.trim() || '',
+      historicoClinico: prontuario.historicoClinico?.trim() || '',
+      diagnostico: prontuario.diagnostico?.trim() || '',
+      conduta: prontuario.conduta?.trim() || '',
+      prescricao:
+        prontuario.prescricao?.trim() || prontuario.receita?.trim() || '',
+      receita:
+        prontuario.receita?.trim() || prontuario.prescricao?.trim() || '',
+      examesSolicitados: prontuario.examesSolicitados?.trim() || '',
+      observacoes: prontuario.observacoes?.trim() || '',
+    };
+  }
+
   async function salvarProntuario() {
-    if (!prontuario.diagnostico.trim()) {
+    const payload = montarPayloadProntuario();
+
+    if (!payload.agendamentoId || payload.agendamentoId <= 0) {
+      toast.error('Agendamento não encontrado para salvar o prontuário.');
+      return null;
+    }
+
+    if (!payload.diagnostico) {
       toast.error('Informe pelo menos o diagnóstico para salvar o prontuário.');
       return null;
     }
@@ -134,21 +190,29 @@ function MedicoAtendimentosPage() {
     try {
       setSalvandoProntuario(true);
 
-      const payload = {
-        ...prontuario,
-        agendamentoId: Number(prontuario.agendamentoId),
-        prescricao: prontuario.prescricao || prontuario.receita || '',
-        receita: prontuario.receita || prontuario.prescricao || '',
-      };
+      let salvo;
 
-      const salvo = payload.id
-        ? await atualizarProntuario(payload)
-        : await criarProntuario(payload);
+      if (payload.id && payload.id > 0) {
+        salvo = await atualizarProntuario(payload);
+      } else {
+        const { id, ...payloadCriacao } = payload;
+        salvo = await criarProntuario(payloadCriacao);
+      }
+
+      const prontuarioAtualizado = normalizarProntuario(
+        salvo || payload,
+        payload.agendamentoId
+      );
+
+      setProntuario(prontuarioAtualizado);
 
       toast.success('Prontuário salvo com sucesso.');
-      return salvo || payload;
+
+      return prontuarioAtualizado;
     } catch (error) {
-      toast.error(error?.response?.data?.mensagem || 'Erro ao salvar prontuário.');
+      toast.error(
+        error?.response?.data?.mensagem || 'Erro ao salvar prontuário.'
+      );
       console.error(error);
       return null;
     } finally {
@@ -157,19 +221,28 @@ function MedicoAtendimentosPage() {
   }
 
   async function salvarProntuarioEFinalizar() {
-    if (!agendamentoSelecionado) return;
+    if (!agendamentoSelecionado?.id) {
+      toast.error('Agendamento não encontrado para finalizar.');
+      return;
+    }
 
     const salvo = await salvarProntuario();
+
     if (!salvo) return;
 
     try {
       setProcessandoId(agendamentoSelecionado.id);
+
       await finalizarAtendimento(agendamentoSelecionado.id);
+
       toast.success('Atendimento finalizado com sucesso.');
+
       fecharModal();
       await carregarAtendimentos();
     } catch (error) {
-      toast.error(error?.response?.data?.mensagem || 'Erro ao finalizar atendimento.');
+      toast.error(
+        error?.response?.data?.mensagem || 'Erro ao finalizar atendimento.'
+      );
       console.error(error);
     } finally {
       setProcessandoId(null);
@@ -178,19 +251,32 @@ function MedicoAtendimentosPage() {
 
   const agendamentosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
+
     if (!termo) return agendamentos;
 
     return agendamentos.filter((agendamento) => {
-      const texto = `${agendamento.paciente?.nome || ''} ${agendamento.procedimento?.nome || ''} ${agendamento.motivoAgendamento || ''} ${agendamento.status || ''}`.toLowerCase();
+      const texto = `
+        ${agendamento.paciente?.nome || ''}
+        ${agendamento.medico?.nome || ''}
+        ${agendamento.procedimento?.nome || ''}
+        ${agendamento.motivoAgendamento || ''}
+        ${agendamento.status || ''}
+      `.toLowerCase();
+
       return texto.includes(termo);
     });
   }, [agendamentos, busca]);
 
   const resumo = useMemo(() => {
     return {
-      liberados: agendamentos.filter((item) => item.status === 'AtendidoRecepcao').length,
-      emAtendimento: agendamentos.filter((item) => item.status === 'EmAndamento').length,
-      finalizados: agendamentos.filter((item) => item.status === 'Finalizado').length,
+      liberados: agendamentos.filter(
+        (item) => item.status === 'AtendidoRecepcao'
+      ).length,
+      emAtendimento: agendamentos.filter(
+        (item) => item.status === 'EmAndamento'
+      ).length,
+      finalizados: agendamentos.filter((item) => item.status === 'Finalizado')
+        .length,
     };
   }, [agendamentos]);
 
@@ -207,8 +293,9 @@ function MedicoAtendimentosPage() {
               <div>
                 <h1 className="text-xl font-bold">Meus Atendimentos</h1>
                 <p className="mt-1 max-w-2xl text-sm text-sky-50">
-                  Área do médico para acompanhar pacientes liberados pela recepção,
-                  iniciar atendimento, registrar prontuário e finalizar.
+                  Área do médico para acompanhar pacientes liberados pela
+                  recepção, iniciar atendimento, registrar prontuário e
+                  finalizar.
                 </p>
               </div>
             </div>
@@ -218,16 +305,30 @@ function MedicoAtendimentosPage() {
               onClick={carregarAtendimentos}
               className="flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-sky-700 transition hover:bg-sky-50"
             >
-              <RefreshCw className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${carregando ? 'animate-spin' : ''}`}
+              />
               Atualizar
             </button>
           </div>
         </section>
 
         <section className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <ResumoCard label="Liberados" valor={resumo.liberados} icon={CheckCircle2} />
-          <ResumoCard label="Em atendimento" valor={resumo.emAtendimento} icon={Activity} />
-          <ResumoCard label="Finalizados" valor={resumo.finalizados} icon={FileText} />
+          <ResumoCard
+            label="Liberados"
+            valor={resumo.liberados}
+            icon={CheckCircle2}
+          />
+          <ResumoCard
+            label="Em atendimento"
+            valor={resumo.emAtendimento}
+            icon={Activity}
+          />
+          <ResumoCard
+            label="Finalizados"
+            valor={resumo.finalizados}
+            icon={FileText}
+          />
         </section>
       </div>
 
@@ -235,10 +336,11 @@ function MedicoAtendimentosPage() {
         <div className="grid gap-3 lg:grid-cols-[1fr_220px_180px]">
           <div className="flex h-11 items-center gap-2 rounded-xl border border-gray-300 px-3">
             <Search className="h-4 w-4 text-gray-400" />
+
             <input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar paciente, procedimento ou motivo..."
+              placeholder="Buscar paciente, médico, procedimento ou motivo..."
               className="h-full w-full border-none bg-transparent text-sm outline-none"
             />
           </div>
@@ -310,6 +412,7 @@ function ResumoCard({ label, valor, icon: Icon }) {
       <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sky-700 shadow-sm">
         <Icon className="h-4 w-4" />
       </div>
+
       <p className="text-lg font-bold text-gray-900">{valor}</p>
       <p className="text-[11px] font-semibold text-gray-500">{label}</p>
     </div>
@@ -318,6 +421,7 @@ function ResumoCard({ label, valor, icon: Icon }) {
 
 function AtendimentoCard({ agendamento, processando, onIniciar, onProntuario }) {
   const status = agendamento.status || 'Agendado';
+
   const podeIniciar = status === 'AtendidoRecepcao';
   const podeProntuario = status === 'EmAndamento' || status === 'Finalizado';
 
@@ -328,6 +432,7 @@ function AtendimentoCard({ agendamento, processando, onIniciar, onProntuario }) 
           <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-700">
             {formatarStatus(status)}
           </span>
+
           <span className="flex items-center gap-1 text-xs font-semibold text-gray-500">
             <Clock3 className="h-3.5 w-3.5" />
             {formatarDataHora(agendamento.dataAgendamento)}
@@ -340,11 +445,20 @@ function AtendimentoCard({ agendamento, processando, onIniciar, onProntuario }) 
 
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
           <span>
-            <strong>Procedimento:</strong> {agendamento.procedimento?.nome || 'Não informado'}
+            <strong>Médico:</strong>{' '}
+            {agendamento.medico?.nome || 'Não informado'}
           </span>
+
           <span>
-            <strong>Tipo:</strong> {agendamento.tipoAtendimento || 'Presencial'}
+            <strong>Procedimento:</strong>{' '}
+            {agendamento.procedimento?.nome || 'Não informado'}
           </span>
+
+          <span>
+            <strong>Tipo:</strong>{' '}
+            {agendamento.tipoAtendimento || 'Presencial'}
+          </span>
+
           <span>
             <strong>Valor:</strong> {formatarMoeda(agendamento.valorCobrado)}
           </span>
@@ -364,7 +478,11 @@ function AtendimentoCard({ agendamento, processando, onIniciar, onProntuario }) 
           disabled={!podeIniciar || processando}
           className="flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {processando ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+          {processando ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <PlayCircle className="h-4 w-4" />
+          )}
           Iniciar
         </button>
 
@@ -400,8 +518,10 @@ function ProntuarioAtendimentoModal({
         <header className="flex items-center justify-between border-b border-gray-200 bg-sky-600 px-5 py-4 text-white">
           <div>
             <h2 className="text-lg font-bold">Prontuário do atendimento</h2>
+
             <p className="text-xs text-sky-100">
-              {agendamento.paciente?.nome || 'Paciente'} • {formatarDataHora(agendamento.dataAgendamento)}
+              {agendamento.paciente?.nome || 'Paciente'} •{' '}
+              {formatarDataHora(agendamento.dataAgendamento)}
             </p>
           </div>
 
@@ -416,15 +536,73 @@ function ProntuarioAtendimentoModal({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50 p-5">
+          <div className="mb-4 rounded-xl border border-sky-100 bg-white p-4 shadow-sm">
+            <div className="grid gap-3 text-xs text-gray-600 md:grid-cols-3">
+              <InfoAtendimento
+                label="Agendamento"
+                valor={`#${agendamento.id}`}
+              />
+
+              <InfoAtendimento
+                label="Paciente"
+                valor={agendamento.paciente?.nome || 'Não informado'}
+              />
+
+              <InfoAtendimento
+                label="Procedimento"
+                valor={agendamento.procedimento?.nome || 'Não informado'}
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
-            <CampoTexto label="Queixa principal" value={prontuario.queixaPrincipal} onChange={(v) => onChange('queixaPrincipal', v)} />
-            <CampoTexto label="Histórico clínico" value={prontuario.historicoClinico} onChange={(v) => onChange('historicoClinico', v)} />
-            <CampoTexto obrigatorio label="Diagnóstico" value={prontuario.diagnostico} onChange={(v) => onChange('diagnostico', v)} />
-            <CampoTexto label="Conduta" value={prontuario.conduta} onChange={(v) => onChange('conduta', v)} />
-            <CampoTexto label="Prescrição / Receita" value={prontuario.prescricao || prontuario.receita} onChange={(v) => { onChange('prescricao', v); onChange('receita', v); }} />
-            <CampoTexto label="Exames solicitados" value={prontuario.examesSolicitados} onChange={(v) => onChange('examesSolicitados', v)} />
+            <CampoTexto
+              label="Queixa principal"
+              value={prontuario.queixaPrincipal}
+              onChange={(v) => onChange('queixaPrincipal', v)}
+            />
+
+            <CampoTexto
+              label="Histórico clínico"
+              value={prontuario.historicoClinico}
+              onChange={(v) => onChange('historicoClinico', v)}
+            />
+
+            <CampoTexto
+              obrigatorio
+              label="Diagnóstico"
+              value={prontuario.diagnostico}
+              onChange={(v) => onChange('diagnostico', v)}
+            />
+
+            <CampoTexto
+              label="Conduta"
+              value={prontuario.conduta}
+              onChange={(v) => onChange('conduta', v)}
+            />
+
+            <CampoTexto
+              label="Prescrição / Receita"
+              value={prontuario.prescricao || prontuario.receita}
+              onChange={(v) => {
+                onChange('prescricao', v);
+                onChange('receita', v);
+              }}
+            />
+
+            <CampoTexto
+              label="Exames solicitados"
+              value={prontuario.examesSolicitados}
+              onChange={(v) => onChange('examesSolicitados', v)}
+            />
+
             <div className="lg:col-span-2">
-              <CampoTexto label="Observações" value={prontuario.observacoes} onChange={(v) => onChange('observacoes', v)} linhas={4} />
+              <CampoTexto
+                label="Observações"
+                value={prontuario.observacoes}
+                onChange={(v) => onChange('observacoes', v)}
+                linhas={4}
+              />
             </div>
           </div>
         </div>
@@ -438,6 +616,7 @@ function ProntuarioAtendimentoModal({
           >
             Cancelar
           </button>
+
           <button
             type="button"
             onClick={onSalvar}
@@ -447,17 +626,31 @@ function ProntuarioAtendimentoModal({
             <FileText className="h-4 w-4" />
             Salvar prontuário
           </button>
+
           <button
             type="button"
             onClick={onFinalizar}
             disabled={salvando}
             className="flex h-10 items-center gap-2 rounded-xl bg-sky-600 px-4 text-xs font-bold text-white transition hover:bg-sky-700 disabled:opacity-60"
           >
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            {salvando ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4" />
+            )}
             Salvar e finalizar
           </button>
         </footer>
       </div>
+    </div>
+  );
+}
+
+function InfoAtendimento({ label, valor }) {
+  return (
+    <div>
+      <p className="font-bold uppercase tracking-wide text-gray-400">{label}</p>
+      <p className="mt-1 truncate font-semibold text-gray-800">{valor}</p>
     </div>
   );
 }
@@ -468,6 +661,7 @@ function CampoTexto({ label, value, onChange, linhas = 3, obrigatorio = false })
       <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-gray-500">
         {label} {obrigatorio && <span className="text-red-500">*</span>}
       </span>
+
       <textarea
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
@@ -481,10 +675,17 @@ function CampoTexto({ label, value, onChange, linhas = 3, obrigatorio = false })
 function normalizarProntuario(dados, agendamentoId) {
   return {
     ...prontuarioInicial,
-    ...dados,
-    agendamentoId,
+    ...(dados || {}),
+    id: dados?.id || null,
+    agendamentoId: dados?.agendamentoId || agendamentoId || '',
+    queixaPrincipal: dados?.queixaPrincipal || '',
+    historicoClinico: dados?.historicoClinico || '',
+    diagnostico: dados?.diagnostico || '',
+    conduta: dados?.conduta || '',
     prescricao: dados?.prescricao || dados?.receita || '',
     receita: dados?.receita || dados?.prescricao || '',
+    examesSolicitados: dados?.examesSolicitados || '',
+    observacoes: dados?.observacoes || '',
   };
 }
 
@@ -502,6 +703,7 @@ function formatarStatus(status) {
 
 function formatarDataHora(data) {
   if (!data) return '-';
+
   return new Date(data).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -523,6 +725,7 @@ function formatarDataInput(data) {
   const ano = d.getFullYear();
   const mes = String(d.getMonth() + 1).padStart(2, '0');
   const dia = String(d.getDate()).padStart(2, '0');
+
   return `${ano}-${mes}-${dia}`;
 }
 
