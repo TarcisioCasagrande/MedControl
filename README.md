@@ -243,9 +243,10 @@ O sistema utiliza autenticação baseada em JWT.
 
 ## 👥 Equipe
 
-* Integrante 1: Backend, API e Banco de Dados
-* Integrante 2: Frontend e Interface
-* Integrante 3: Testes, Documentação e Diagrama
+Integrante 1
+Integrante 2
+
+Ambos os integrantes participaram de todas as etapas do desenvolvimento, incluindo backend, frontend, modelagem do banco de dados, testes e documentação, colaborando de forma conjunta na construção do sistema.
 
 ---
 
