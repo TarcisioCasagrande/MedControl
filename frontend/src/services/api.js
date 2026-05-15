@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://medcontrol-4.onrender.com/api',
+  baseURL: 'http://localhost:5179/api',
 });
 
 api.interceptors.request.use((config) => {
