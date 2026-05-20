@@ -639,7 +639,7 @@ function ResumoEstrategico({ faturamentoMes, consultasMes, ticketMedio, minutosA
         <LinhaResumo label="Faturamento" valor={formatarMoeda(faturamentoMes)} />
         <LinhaResumo label="Consultas" valor={consultasMes} />
         <LinhaResumo label="Ticket médio" valor={formatarMoeda(ticketMedio)} />
-        <LinhaResumo label="Minutos" valor={`${minutosAtendidos} min`} />
+        <LinhaResumo label="Tempo de atendimento" valor={`${minutosAtendidos} min`} />
       </div>
     </div>
   );
