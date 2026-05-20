@@ -75,7 +75,7 @@ const gruposMenu = [
     icon: FileText,
     perfis: ['Admin', 'Recepcionista'],
     itens: [
-      { to: '/relatorios/minutos', label: 'Minutos atendidos', icon: Clock3, perfis: ['Admin', 'Recepcionista'] },
+      { to: '/relatorios/minutos', label: 'Tempo de atendimento', icon: Clock3, perfis: ['Admin', 'Recepcionista'] },
       { to: '/relatorios/pagamentos', label: 'Relatório de pagamentos', icon: CreditCard, perfis: ['Admin', 'Recepcionista'] },
       { to: '/relatorios/agendamentos-usuario', label: 'Agendamentos por Usuário', icon: FileText, perfis: ['Admin', 'Recepcionista'] },
     ],

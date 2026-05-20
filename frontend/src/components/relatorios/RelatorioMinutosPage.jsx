@@ -99,7 +99,7 @@ function RelatorioMinutosPage() {
 
             <div>
               <h1 className="text-lg font-bold text-gray-900">
-                Relatório de Minutos Atendidos
+                Relatório de Tempo de Atendimento
               </h1>
               <p className="text-xs text-gray-500">
                 Acompanhe o tempo real de atendimento dos agendamentos finalizados

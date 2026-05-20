@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projetos\\backend\\MeuCrud.Api.csproj": {}
+    "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj": {}
   },
   "projects": {
-    "C:\\Projetos\\backend\\MeuCrud.Api.csproj": {
+    "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projetos\\backend\\MeuCrud.Api.csproj",
+        "projectUniqueName": "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj",
         "projectName": "MeuCrud.Api",
-        "projectPath": "C:\\Projetos\\backend\\MeuCrud.Api.csproj",
-        "packagesPath": "C:\\Users\\tarci\\.nuget\\packages\\",
-        "outputPath": "C:\\Projetos\\backend\\obj\\",
+        "projectPath": "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj",
+        "packagesPath": "C:\\Users\\Pierri\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\tarci\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Pierri\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
