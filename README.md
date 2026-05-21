@@ -232,7 +232,6 @@ O sistema utiliza autenticação baseada em JWT.
 * **Admin**: acesso total ao sistema
 * **Recepcionista**: gestão de pacientes e consultas
 * **Médico**: acesso a consultas e prontuários
-* **Paciente**: acesso restrito às próprias informações
 
 ### Camadas de segurança:
 
