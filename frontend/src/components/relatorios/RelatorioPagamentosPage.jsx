@@ -186,10 +186,11 @@ function RelatorioPagamentosPage() {
         </div>
 
         <div className="min-h-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="grid grid-cols-[70px_1fr_1fr_130px_120px_120px] border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase text-gray-500">
+          <div className="grid grid-cols-[70px_1fr_1fr_130px_120px_120px_120px] border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase text-gray-500">
             <span>ID</span>
             <span>Paciente</span>
             <span>Médico</span>
+            <span>Data</span>
             <span>Forma</span>
             <span>Status</span>
             <span>Valor</span>
@@ -208,7 +209,7 @@ function RelatorioPagamentosPage() {
               pagamentosFiltrados.map((pagamento) => (
                 <div
                   key={pagamento.id}
-                  className="grid grid-cols-[70px_1fr_1fr_130px_120px_120px] items-center border-b border-gray-100 px-4 py-3 text-xs hover:bg-gray-50"
+                  className="grid grid-cols-[70px_1fr_1fr_130px_120px_120px_120px] items-center border-b border-gray-100 px-4 py-3 text-xs hover:bg-gray-50"
                 >
                   <span className="font-semibold text-blue-700">#{pagamento.id}</span>
 
@@ -219,6 +220,14 @@ function RelatorioPagamentosPage() {
 
                   <span className="truncate text-gray-700">
                     {pagamento.agendamento?.medico?.nome || 'Não informado'}
+                  </span>
+
+                  <span className="text-gray-700">
+                    {formatarDataBrasil(
+                      pagamento.dataPagamento ||
+                      pagamento.dataCadastro ||
+                      pagamento.agendamento?.dataAgendamento
+                      )}
                   </span>
 
                   <span>{pagamento.formaPagamento || '—'}</span>
@@ -292,6 +301,18 @@ function formatarDataInput(data) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
     d.getDate()
   ).padStart(2, '0')}`;
+}
+
+function formatarDataBrasil(data) {
+  if (!data) return '—';
+
+  const d = new Date(data);
+
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
+
+  return d.toLocaleDateString('pt-BR');
 }
 
 export default RelatorioPagamentosPage; 
