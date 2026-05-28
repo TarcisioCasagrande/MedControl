@@ -509,8 +509,8 @@ function GraficoCard({ titulo, data, dataKey, valorKey, tipo }) {
       ) : (
         
         /* Área do gráfico */
-        <div className="h-[180px] xl:h-[190px]">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full overflow-hidden">
+          <ResponsiveContainer width="100%" height={180}>
             
             {/* Gráfico de barras */}
             <BarChart data={data} margin={{ top: 6, right: 6, left: -18, bottom: 0 }}>

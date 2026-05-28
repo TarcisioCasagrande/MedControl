@@ -317,7 +317,7 @@ function ProntuarioFormModal({
 
             <button
               type="submit"
-              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 text-xs font-bold text-white transition hover:bg-green-700"
+              className="flex h-10 items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 text-xs font-bold text-white transition hover:bg-sky-700"
             >
               <Save className="h-4 w-4" />
               {prontuarioEditando ? 'Salvar alterações' : 'Cadastrar prontuário'}

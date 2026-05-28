@@ -1,114 +1,150 @@
 import {
   X,
   FileText,
-  UserRound,
-  Stethoscope,
   ClipboardList,
+  Stethoscope,
+  Activity,
   Pill,
-  NotebookPen,
-  Hash,
+  FlaskConical,
+  MessageSquareText,
+  CalendarDays,
+  UserRound,
+  BadgeCheck,
 } from 'lucide-react';
 
 function ProntuarioViewModal({ isOpen, onClose, prontuario }) {
   if (!isOpen || !prontuario) return null;
 
-  const paciente = prontuario.agendamento?.paciente;
-  const medico = prontuario.agendamento?.medico;
-  const agendamento = prontuario.agendamento;
+  function formatarData(data) {
+    if (!data) return '-';
+
+    return new Date(data).toLocaleString('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-5xl rounded-2xl bg-white shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 bg-gray-50">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-blue-600" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3">
+      <div className="flex max-h-[96vh] w-full max-w-[1500px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between bg-sky-600 px-6 py-4 text-white">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white/15">
+              <FileText className="h-5 w-5" />
             </div>
 
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Visualizar prontuário
-              </h2>
-              <p className="text-sm text-gray-500">
-                Prontuário #{prontuario.id}
-              </p>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-black">Visualizar prontuário</h2>
+              <p className="text-xs text-sky-100">Prontuário #{prontuario.id}</p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+            className="rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[85vh] overflow-y-auto">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <InfoCard
-              icon={Hash}
-              titulo="ID do prontuário"
-              valor={`#${prontuario.id}`}
+        <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50 p-4">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <InfoBox
+              icon={UserRound}
+              titulo="Paciente"
+              valor={prontuario.agendamento?.paciente?.nome || 'Não informado'}
+            />
+
+            <InfoBox
+              icon={Stethoscope}
+              titulo="Médico"
+              valor={prontuario.agendamento?.medico?.nome || 'Não informado'}
+            />
+
+            <InfoBox
+              icon={CalendarDays}
+              titulo="Data do atendimento"
+              valor={formatarData(prontuario.agendamento?.dataAgendamento)}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <MiniInfo
+              icon={ClipboardList}
+              titulo="Agendamento"
+              valor={prontuario.agendamentoId ? `#${prontuario.agendamentoId}` : '-'}
               cor="blue"
             />
 
-            <InfoCard
-              icon={UserRound}
-              titulo="Paciente"
-              valor={paciente?.nome || 'Não informado'}
-              subtitulo={paciente?.id ? `Paciente #${paciente.id}` : 'Sem ID relacionado'}
+            <MiniInfo
+              icon={Stethoscope}
+              titulo="Diagnóstico"
+              valor={prontuario.diagnostico ? 'Preenchido' : 'Não informado'}
               cor="green"
             />
 
-            <InfoCard
-              icon={Stethoscope}
-              titulo="Médico"
-              valor={medico?.nome || 'Não informado'}
-              subtitulo={medico?.id ? `Médico #${medico.id}` : 'Sem ID relacionado'}
+            <MiniInfo
+              icon={Pill}
+              titulo="Prescrição"
+              valor={prontuario.prescricao || prontuario.receita ? 'Preenchida' : 'Não informado'}
               cor="violet"
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <TextoCard
+              icon={Activity}
+              titulo="Queixa principal"
+              valor={prontuario.queixaPrincipal}
+            />
+
             <TextoCard
               icon={ClipboardList}
+              titulo="Histórico clínico"
+              valor={prontuario.historicoClinico}
+            />
+
+            <TextoCard
+              icon={Stethoscope}
               titulo="Diagnóstico"
-              conteudo={prontuario.diagnostico}
-              cor="violet"
+              valor={prontuario.diagnostico}
+            />
+
+            <TextoCard
+              icon={Activity}
+              titulo="Conduta"
+              valor={prontuario.conduta}
             />
 
             <TextoCard
               icon={Pill}
-              titulo="Receita"
-              conteudo={prontuario.receita}
-              cor="amber"
+              titulo="Prescrição / Receita"
+              valor={prontuario.prescricao || prontuario.receita}
+            />
+
+            <TextoCard
+              icon={FlaskConical}
+              titulo="Exames solicitados"
+              valor={prontuario.examesSolicitados}
             />
           </div>
 
-          <TextoCard
-            icon={NotebookPen}
-            titulo="Observações"
-            conteudo={prontuario.observacoes}
-            cor="slate"
-          />
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoBox
-              label="Agendamento vinculada"
-              value={agendamento?.id ? `#${agendamento.id}` : 'Não informada'}
-            />
-
-            <InfoBox
-              label="Data da agendamento"
-              value={agendamento?.dataAgendamento ? formatarDataHora(agendamento.dataAgendamento) : 'Não informada'}
+          <div className="mt-4 grid grid-cols-1 gap-4">
+            <TextoCard
+              icon={MessageSquareText}
+              titulo="Observações"
+              valor={prontuario.observacoes}
+              grande
             />
           </div>
         </div>
 
-        <div className="flex justify-end border-t border-gray-200 px-6 py-4 bg-gray-50">
+        <div className="flex justify-end border-t border-gray-200 bg-white px-6 py-4">
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            className="h-10 rounded-xl bg-sky-600 px-5 text-sm font-bold text-white transition hover:bg-sky-700"
           >
             Fechar
           </button>
@@ -118,79 +154,62 @@ function ProntuarioViewModal({ isOpen, onClose, prontuario }) {
   );
 }
 
-function InfoCard({ icon: Icon, titulo, valor, subtitulo, cor = 'blue' }) {
-  const cores = {
-    blue: 'bg-blue-50 border-blue-200 text-blue-700',
-    green: 'bg-green-50 border-green-200 text-green-700',
-    violet: 'bg-violet-50 border-violet-200 text-violet-700',
-  };
-
-  const estilo = cores[cor] || cores.blue;
-
+function InfoBox({ icon: Icon, titulo, valor }) {
   return (
-    <div className={`rounded-xl border p-4 ${estilo}`}>
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg bg-white/70 flex items-center justify-center">
-          <Icon className="w-5 h-5" />
-        </div>
-
-        <div>
-          <p className="text-xs uppercase tracking-wide font-semibold opacity-80">
-            {titulo}
-          </p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{valor}</p>
-          {subtitulo && (
-            <p className="mt-1 text-xs text-gray-500">{subtitulo}</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TextoCard({ icon: Icon, titulo, conteudo, cor = 'slate' }) {
-  const cores = {
-    violet: 'bg-violet-50 border-violet-200 text-violet-700',
-    amber: 'bg-amber-50 border-amber-200 text-amber-700',
-    slate: 'bg-slate-50 border-slate-200 text-slate-700',
-  };
-
-  const estilo = cores[cor] || cores.slate;
-
-  return (
-    <div className={`rounded-xl border ${estilo}`}>
-      <div className="flex items-center gap-2 border-b border-black/5 px-4 py-3">
-        <Icon className="w-4 h-4" />
-        <h3 className="text-sm font-semibold">{titulo}</h3>
-      </div>
-
-      <div className="px-4 py-4">
-        <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700">
-          {conteudo || 'Nenhuma informação registrada.'}
+    <section className="min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center gap-2">
+        <Icon className="h-4 w-4 flex-shrink-0 text-sky-600" />
+        <p className="text-[11px] font-bold uppercase tracking-wide text-sky-700">
+          {titulo}
         </p>
       </div>
-    </div>
-  );
-}
 
-function InfoBox({ label, value }) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-xs uppercase tracking-wide font-semibold text-gray-400">
-        {label}
+      <p className="break-words text-sm font-black leading-snug text-gray-900">
+        {valor || 'Não informado'}
       </p>
-      <p className="mt-2 text-sm font-medium text-gray-800">{value}</p>
+    </section>
+  );
+}
+
+function MiniInfo({ icon: Icon, titulo, valor, cor }) {
+  const cores = {
+    blue: 'border-sky-200 bg-sky-50 text-sky-700',
+    green: 'border-green-200 bg-green-50 text-green-700',
+    violet: 'border-violet-200 bg-violet-50 text-violet-700',
+  };
+
+  return (
+    <div className={`min-w-0 rounded-2xl border px-4 py-3 shadow-sm ${cores[cor]}`}>
+      <div className="flex min-w-0 items-center gap-2">
+        <Icon className="h-4 w-4 flex-shrink-0" />
+
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wide">{titulo}</p>
+          <p className="truncate text-xs font-bold">{valor}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
-function formatarDataHora(data) {
-  const d = new Date(data);
+function TextoCard({ icon: Icon, titulo, valor, grande = false }) {
+  return (
+    <section className="min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center gap-2">
+        <Icon className="h-4 w-4 flex-shrink-0 text-sky-600" />
 
-  return d.toLocaleString('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
+        <h3 className="truncate text-sm font-black text-gray-900">{titulo}</h3>
+      </div>
+
+      <div
+        className={`overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm leading-relaxed text-gray-700 ${
+          grande ? 'min-h-[110px]' : 'min-h-[150px] max-h-[220px] overflow-y-auto'
+        }`}
+      >
+        {valor || 'Nenhuma informação registrada.'}
+      </div>
+    </section>
+  );
 }
 
 export default ProntuarioViewModal;

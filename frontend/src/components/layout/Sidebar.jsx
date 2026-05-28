@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Activity,
 } from 'lucide-react';
+
 import { useAuth } from '../../contexts/AuthContext';
 
 const gruposMenu = [
@@ -109,7 +110,9 @@ function Sidebar() {
 
           <div>
             <h1 className="text-sm font-bold text-slate-900">ControlMed</h1>
-            <p className="text-[11px] font-medium text-slate-500">Gestão Médica</p>
+            <p className="text-[11px] font-medium text-slate-500">
+              Gestão Médica
+            </p>
           </div>
         </div>
 
@@ -120,7 +123,11 @@ function Sidebar() {
               grupo.tipo === 'link' ? (
                 <MenuLink key={grupo.to} item={grupo} />
               ) : (
-                <MenuDropdown key={grupo.label} grupo={grupo} podeVer={podeVer} />
+                <MenuDropdown
+                  key={grupo.label}
+                  grupo={grupo}
+                  podeVer={podeVer}
+                />
               )
             )}
         </nav>
@@ -132,8 +139,13 @@ function Sidebar() {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-slate-800">{usuario?.nome}</p>
-              <p className="text-[11px] text-slate-500">{usuario?.perfil}</p>
+              <p className="text-xs font-bold text-slate-800">
+                {usuario?.nome}
+              </p>
+
+              <p className="text-[11px] text-slate-500">
+                {usuario?.perfil}
+              </p>
             </div>
           </div>
 
@@ -155,7 +167,12 @@ function Sidebar() {
             grupo.tipo === 'link' ? (
               <MenuLink key={grupo.to} item={grupo} compacto />
             ) : (
-              <MenuDropdown key={grupo.label} grupo={grupo} podeVer={podeVer} compacto />
+              <MenuDropdown
+                key={grupo.label}
+                grupo={grupo}
+                podeVer={podeVer}
+                compacto
+              />
             )
           )}
       </div>
@@ -178,16 +195,23 @@ function MenuLink({ item, compacto = false }) {
       }
     >
       <Icon className="h-4 w-4 shrink-0" />
-      <span className="whitespace-nowrap">{item.label}</span>
+
+      <span className="whitespace-nowrap">
+        {item.label}
+      </span>
     </NavLink>
   );
 }
 
 function MenuDropdown({ grupo, podeVer, compacto = false }) {
   const location = useLocation();
+
   const [aberto, setAberto] = useState(false);
 
-  const itensVisiveis = grupo.itens.filter((item) => podeVer(item.perfis));
+  const itensVisiveis = grupo.itens.filter((item) =>
+    podeVer(item.perfis)
+  );
+
   const Icon = grupo.icon;
 
   const algumAtivo = itensVisiveis.some((item) =>
@@ -212,15 +236,28 @@ function MenuDropdown({ grupo, podeVer, compacto = false }) {
         } ${compacto ? 'text-xs' : ''}`}
       >
         <Icon className="h-4 w-4 shrink-0" />
-        <span className="whitespace-nowrap">{grupo.label}</span>
-        <ChevronDown className={`h-4 w-4 transition ${aberto ? 'rotate-180' : ''}`} />
+
+        <span className="whitespace-nowrap">
+          {grupo.label}
+        </span>
+
+        <ChevronDown
+          className={`h-4 w-4 transition ${
+            aberto ? 'rotate-180' : ''
+          }`}
+        />
       </button>
 
       {aberto && (
-        <div className="absolute left-0 top-11 z-50 min-w-[230px] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-          {itensVisiveis.map((item) => (
-            <MenuSubLink key={item.to} item={item} />
-          ))}
+        <div className="absolute left-0 top-10 z-[9999] pt-1">
+          <div className="min-w-[230px] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            {itensVisiveis.map((item) => (
+              <MenuSubLink
+                key={item.to}
+                item={item}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -242,7 +279,10 @@ function MenuSubLink({ item }) {
       }
     >
       <Icon className="h-4 w-4 shrink-0" />
-      <span className="truncate whitespace-nowrap">{item.label}</span>
+
+      <span className="truncate whitespace-nowrap">
+        {item.label}
+      </span>
     </NavLink>
   );
 }

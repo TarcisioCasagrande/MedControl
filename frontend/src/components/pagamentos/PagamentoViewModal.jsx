@@ -36,35 +36,35 @@ function PagamentoViewModal({ isOpen, onClose, pagamento }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between bg-sky-600 px-6 py-4 text-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-green-600" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+              <CreditCard className="h-5 w-5" />
             </div>
 
             <div>
-              <h2 className="text-lg font-bold text-gray-800">
+              <h2 className="text-lg font-black">
                 Detalhes do pagamento #{pagamento.id}
               </h2>
-              <p className="text-sm text-gray-500">
-                Informações da cobrança vinculada à agendamento
+              <p className="text-xs text-sky-100">
+                Informações financeiras vinculadas ao agendamento
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="rounded-lg p-2 text-white/80 transition hover:bg-white/10 hover:text-white"
             type="button"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50 p-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <InfoCard
               icon={DollarSign}
               label="Valor"
@@ -78,11 +78,11 @@ function PagamentoViewModal({ isOpen, onClose, pagamento }) {
               value={pagamento.formaPagamento || 'Não informado'}
             />
 
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
                 Status
               </p>
-              <div className="mt-2">
+              <div className="mt-3">
                 <PagamentoStatusBadge status={pagamento.statusPagamento} />
               </div>
             </div>
@@ -94,64 +94,63 @@ function PagamentoViewModal({ isOpen, onClose, pagamento }) {
             />
           </div>
 
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <CalendarDays className="w-4 h-4 text-blue-600" />
-              <h3 className="text-sm font-semibold text-blue-900">
-                Agendamento vinculada
+          <section className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 p-4 shadow-sm">
+            <div className="mb-4 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-sky-600" />
+              <h3 className="text-sm font-black text-sky-900">
+                Agendamento vinculado
               </h3>
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <p className="text-sm text-gray-700">
-                <strong>ID da agendamento:</strong> #{pagamento.agendamentoId}
-              </p>
+              <LinhaDetalhe
+                label="ID do agendamento"
+                value={`#${pagamento.agendamentoId}`}
+              />
 
-              <p className="text-sm text-gray-700">
-                <strong>Data:</strong>{' '}
-                {formatarDataAgendamento(pagamento.agendamento?.dataAgendamento)}
-              </p>
+              <LinhaDetalhe
+                label="Data"
+                value={formatarDataAgendamento(
+                  pagamento.agendamento?.dataAgendamento
+                )}
+              />
 
-              <p className="text-sm text-gray-700 flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-500" />
-                <span>
-                  <strong>Paciente:</strong>{' '}
-                  {pagamento.agendamento?.paciente?.nome || 'Não informado'}
-                </span>
-              </p>
+              <LinhaDetalhe
+                icon={User}
+                label="Paciente"
+                value={pagamento.agendamento?.paciente?.nome || 'Não informado'}
+              />
 
-              <p className="text-sm text-gray-700 flex items-center gap-2">
-                <Stethoscope className="w-4 h-4 text-gray-500" />
-                <span>
-                  <strong>Médico:</strong>{' '}
-                  {pagamento.agendamento?.medico?.nome || 'Não informado'}
-                </span>
-              </p>
+              <LinhaDetalhe
+                icon={Stethoscope}
+                label="Médico"
+                value={pagamento.agendamento?.medico?.nome || 'Não informado'}
+              />
             </div>
-          </div>
+          </section>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ClipboardList className="w-4 h-4 text-gray-500" />
-              <h3 className="text-sm font-semibold text-gray-800">
+          <section className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-sky-600" />
+              <h3 className="text-sm font-black text-gray-900">
                 Observações
               </h3>
             </div>
 
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="min-h-24 whitespace-pre-wrap rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm leading-relaxed text-gray-700">
               {pagamento.observacoes || 'Nenhuma observação cadastrada.'}
             </p>
-          </div>
+          </section>
+        </div>
 
-          <div className="flex justify-end border-t border-gray-200 pt-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-              type="button"
-            >
-              Fechar
-            </button>
-          </div>
+        <div className="flex justify-end border-t border-gray-200 bg-white px-6 py-4">
+          <button
+            onClick={onClose}
+            className="h-10 rounded-xl bg-sky-600 px-5 text-sm font-bold text-white transition hover:bg-sky-700"
+            type="button"
+          >
+            Fechar
+          </button>
         </div>
       </div>
     </div>
@@ -160,29 +159,45 @@ function PagamentoViewModal({ isOpen, onClose, pagamento }) {
 
 function InfoCard({ icon: Icon, label, value, destaque }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-      <div className="flex items-start gap-3">
-        <div
-          className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-            destaque ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'
-          }`}
-        >
-          <Icon className="w-4 h-4" />
-        </div>
-
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            {label}
-          </p>
-          <p
-            className={`mt-1 text-sm font-semibold ${
-              destaque ? 'text-green-700' : 'text-gray-800'
-            }`}
-          >
-            {value}
-          </p>
-        </div>
+    <div
+      className={`rounded-2xl border p-4 shadow-sm ${
+        destaque
+          ? 'border-green-200 bg-green-50'
+          : 'border-gray-200 bg-white'
+      }`}
+    >
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+        <Icon className="h-5 w-5" />
       </div>
+
+      <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 text-sm font-black ${
+          destaque ? 'text-green-700' : 'text-gray-900'
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function LinhaDetalhe({ icon: Icon, label, value }) {
+  return (
+    <div className="rounded-xl border border-sky-100 bg-white p-3">
+      <div className="mb-1 flex items-center gap-2">
+        {Icon && <Icon className="h-4 w-4 text-sky-600" />}
+        <p className="text-xs font-bold uppercase tracking-wide text-sky-700">
+          {label}
+        </p>
+      </div>
+
+      <p className="text-sm font-black text-gray-900">
+        {value}
+      </p>
     </div>
   );
 }

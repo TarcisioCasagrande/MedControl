@@ -8,11 +8,10 @@ function ProcedimentosTable({ procedimentos, onVisualizar, onEditar, onDeletar }
     });
   }
 
-  function formatarData(data) {
-    if (!data) return '-';
-
-    return new Date(data).toLocaleDateString('pt-BR');
+  function obterDataCadastro(procedimento) {
+    return procedimento?.dataCadastro || procedimento?.DataCadastro || null;
   }
+
 
   if (procedimentos.length === 0) {
     return (
@@ -31,7 +30,6 @@ function ProcedimentosTable({ procedimentos, onVisualizar, onEditar, onDeletar }
           <th className="border-b border-gray-200 px-4 py-3 font-bold">Código</th>
           <th className="border-b border-gray-200 px-4 py-3 font-bold">Valor</th>
           <th className="border-b border-gray-200 px-4 py-3 font-bold">Status</th>
-          <th className="border-b border-gray-200 px-4 py-3 font-bold">Cadastro</th>
           <th className="border-b border-gray-200 px-4 py-3 text-right font-bold">
             Ações
           </th>
@@ -40,29 +38,29 @@ function ProcedimentosTable({ procedimentos, onVisualizar, onEditar, onDeletar }
 
       <tbody className="divide-y divide-gray-100 bg-white">
         {procedimentos.map((procedimento) => (
-          <tr key={procedimento.id} className="transition hover:bg-gray-50">
+          <tr key={procedimento.id || procedimento.Id} className="transition hover:bg-gray-50">
             <td className="px-4 py-3 font-semibold text-gray-700">
-              #{procedimento.id}
+              #{procedimento.id || procedimento.Id}
             </td>
 
             <td className="px-4 py-3">
               <div className="font-semibold text-gray-900">
-                {procedimento.nome}
+                {procedimento.nome || procedimento.Nome}
               </div>
             </td>
 
             <td className="px-4 py-3">
               <span className="rounded-md bg-gray-100 px-2 py-1 font-mono text-[11px] font-semibold text-gray-700">
-                {procedimento.codigo}
+                {procedimento.codigo || procedimento.Codigo || '-'}
               </span>
             </td>
 
             <td className="px-4 py-3 font-bold text-gray-800">
-              {formatarValor(procedimento.valor)}
+              {formatarValor(procedimento.valor ?? procedimento.Valor)}
             </td>
 
             <td className="px-4 py-3">
-              {procedimento.ativo ? (
+              {(procedimento.ativo ?? procedimento.Ativo) ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700">
                   <CheckCircle2 className="h-3 w-3" />
                   Ativo
@@ -73,10 +71,6 @@ function ProcedimentosTable({ procedimentos, onVisualizar, onEditar, onDeletar }
                   Inativo
                 </span>
               )}
-            </td>
-
-            <td className="px-4 py-3 text-gray-600">
-              {formatarData(procedimento.dataCadastro)}
             </td>
 
             <td className="px-4 py-3">

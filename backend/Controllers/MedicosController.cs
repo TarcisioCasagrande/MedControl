@@ -10,26 +10,55 @@ namespace MeuCrud.Api.Controllers
     public class MedicosController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public MedicosController(AppDbContext context) => _context = context;
+
+        public MedicosController(AppDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Medico>>> Listar() => Ok(await _context.Medicos.OrderBy(m => m.Nome).ToListAsync());
+        public async Task<ActionResult<IEnumerable<Medico>>> Listar()
+        {
+            var medicos = await _context.Medicos
+                .OrderBy(m => m.Nome)
+                .ToListAsync();
+
+            return Ok(medicos);
+        }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Medico>> BuscarPorId(int id)
         {
             var medico = await _context.Medicos.FindAsync(id);
-            return medico == null ? NotFound(new { mensagem = "Médico não encontrado." }) : Ok(medico);
+
+            if (medico == null)
+                return NotFound(new { mensagem = "Médico não encontrado." });
+
+            return Ok(medico);
         }
 
         [HttpPost]
         public async Task<ActionResult<Medico>> Criar(Medico medico)
         {
-            if (await _context.Medicos.AnyAsync(m => m.CRM == medico.CRM)) return BadRequest(new { mensagem = "Já existe médico com este CRM." });
+            medico.CRM = NormalizarCrm(medico.CRM);
+
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
+            var crmJaExiste = await _context.Medicos
+                .AnyAsync(m => m.CRM == medico.CRM);
+
+            if (crmJaExiste)
+                return BadRequest(new { mensagem = "Já existe médico com este CRM." });
+
             medico.Id = 0;
             medico.DataCadastro = DateTime.UtcNow;
+            medico.DataAtualizacao = null;
+            medico.Ativo = true;
+
             _context.Medicos.Add(medico);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(BuscarPorId), new { id = medico.Id }, medico);
         }
 
@@ -37,18 +66,33 @@ namespace MeuCrud.Api.Controllers
         public async Task<IActionResult> Atualizar(int id, Medico dados)
         {
             var medico = await _context.Medicos.FindAsync(id);
-            if (medico == null) return NotFound(new { mensagem = "Médico não encontrado." });
-            if (await _context.Medicos.AnyAsync(m => m.Id != id && m.CRM == dados.CRM)) return BadRequest(new { mensagem = "Já existe outro médico com este CRM." });
-            medico.Nome = dados.Nome;
+
+            if (medico == null)
+                return NotFound(new { mensagem = "Médico não encontrado." });
+
+            dados.CRM = NormalizarCrm(dados.CRM);
+
+            if (!ModelState.IsValid)
+                return ValidationProblem(ModelState);
+
+            var crmJaExiste = await _context.Medicos
+                .AnyAsync(m => m.Id != id && m.CRM == dados.CRM);
+
+            if (crmJaExiste)
+                return BadRequest(new { mensagem = "Já existe outro médico com este CRM." });
+
+            medico.Nome = dados.Nome.Trim();
             medico.CRM = dados.CRM;
-            medico.Especialidade = dados.Especialidade;
-            medico.Telefone = dados.Telefone;
-            medico.Email = dados.Email;
-            medico.Clinica = dados.Clinica;
-            medico.TurnoAtendimento = dados.TurnoAtendimento;
+            medico.Especialidade = dados.Especialidade.Trim();
+            medico.Telefone = dados.Telefone.Trim();
+            medico.Email = dados.Email.Trim().ToLower();
+            medico.Clinica = dados.Clinica?.Trim() ?? string.Empty;
+            medico.TurnoAtendimento = dados.TurnoAtendimento?.Trim() ?? string.Empty;
             medico.Ativo = dados.Ativo;
             medico.DataAtualizacao = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -56,11 +100,27 @@ namespace MeuCrud.Api.Controllers
         public async Task<IActionResult> Excluir(int id)
         {
             var medico = await _context.Medicos.FindAsync(id);
-            if (medico == null) return NotFound(new { mensagem = "Médico não encontrado." });
-            if (await _context.Agendamentos.AnyAsync(a => a.MedicoId == id)) return BadRequest(new { mensagem = "Não é possível excluir médico com agendamentos vinculados." });
+
+            if (medico == null)
+                return NotFound(new { mensagem = "Médico não encontrado." });
+
+            var possuiAgendamentos = await _context.Agendamentos
+                .AnyAsync(a => a.MedicoId == id);
+
+            if (possuiAgendamentos)
+                return BadRequest(new { mensagem = "Não é possível excluir médico com agendamentos vinculados." });
+
             _context.Medicos.Remove(medico);
             await _context.SaveChangesAsync();
+
             return NoContent();
+        }
+
+        private static string NormalizarCrm(string? crm)
+        {
+            return (crm ?? string.Empty)
+                .Trim()
+                .ToUpper();
         }
     }
 }

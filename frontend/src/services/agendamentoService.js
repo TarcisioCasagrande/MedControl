@@ -17,20 +17,11 @@ function montarPayloadAgendamento(agendamento) {
   };
 }
 
-/**
- * Lista geral.
- * Para recepção/admin retorna todos.
- * Para médico, o backend já filtra automaticamente se a rota estiver protegida.
- */
 export const getAgendamentos = async () => {
   const response = await api.get('/agendamentos');
   return response.data;
 };
 
-/**
- * Lista somente os agendamentos do médico logado.
- * Usado quando a tela precisa garantir a visão individual do médico.
- */
 export const getMeusAgendamentos = async (filtros = {}) => {
   const params = {};
 
@@ -41,9 +32,6 @@ export const getMeusAgendamentos = async (filtros = {}) => {
   return response.data;
 };
 
-/**
- * Mantido como alias para telas antigas do médico.
- */
 export const getAtendimentosMedicoLogado = async (filtros = {}) => {
   return getMeusAgendamentos(filtros);
 };
@@ -71,7 +59,10 @@ export const atualizarAgendamento = async (agendamento) => {
 };
 
 export const alterarStatusAgendamento = async (id, status) => {
-  const response = await api.put(`/agendamentos/${id}/alterar-status`, { status });
+  const response = await api.put(`/agendamentos/${id}/alterar-status`, {
+    status,
+  });
+
   return response.data;
 };
 

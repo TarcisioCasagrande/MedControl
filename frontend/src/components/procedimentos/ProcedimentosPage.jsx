@@ -47,11 +47,12 @@ function ProcedimentosPage() {
   async function carregarDados() {
     try {
       setLoading(true);
+
       const dados = await getProcedimentos();
+
       setProcedimentos(dados || []);
-    } catch (error) {
+    } catch {
       toast.error('Não foi possível carregar os procedimentos.');
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -84,13 +85,13 @@ function ProcedimentosPage() {
 
       setIsFormModalOpen(false);
       setProcedimentoEditando(null);
+
       await carregarDados();
     } catch (error) {
       const mensagem =
         error?.response?.data?.mensagem || 'Erro ao salvar o procedimento.';
 
       toast.error(mensagem);
-      console.error(error);
     }
   }
 
@@ -99,11 +100,37 @@ function ProcedimentosPage() {
     setIsDeleteDialogOpen(true);
   }
 
+  function obterMensagemBloqueioExclusao(procedimento) {
+    const total = Number(procedimento?.totalAgendamentosVinculados || 0);
+
+    if (total > 0) {
+      return `Não é possível excluir este procedimento porque ele está vinculado a ${total} agendamento(s).`;
+    }
+
+    if (procedimento?.possuiAgendamentos) {
+      return 'Não é possível excluir este procedimento porque ele está vinculado a agendamentos.';
+    }
+
+    return '';
+  }
+
   async function handleDeletar() {
+    const mensagemBloqueio = obterMensagemBloqueioExclusao(procedimentoDeletando);
+
+    if (mensagemBloqueio) {
+      toast.error(mensagemBloqueio);
+
+      setIsDeleteDialogOpen(false);
+      setProcedimentoDeletando(null);
+
+      return;
+    }
+
     try {
       await deletarProcedimento(procedimentoDeletando.id);
 
       toast.success('Procedimento removido com sucesso!');
+
       setIsDeleteDialogOpen(false);
       setProcedimentoDeletando(null);
 
@@ -111,10 +138,12 @@ function ProcedimentosPage() {
     } catch (error) {
       const mensagem =
         error?.response?.data?.mensagem ||
-        'Erro ao deletar o procedimento. Verifique se ele possui agendamentos vinculados.';
+        'Erro ao deletar o procedimento.';
 
       toast.error(mensagem);
-      console.error(error);
+
+      setIsDeleteDialogOpen(false);
+      setProcedimentoDeletando(null);
     }
   }
 
@@ -144,8 +173,10 @@ function ProcedimentosPage() {
 
   const ticketMedio =
     totalProcedimentos > 0
-      ? procedimentos.reduce((total, item) => total + Number(item.valor || 0), 0) /
-        totalProcedimentos
+      ? procedimentos.reduce(
+          (total, item) => total + Number(item.valor || 0),
+          0
+        ) / totalProcedimentos
       : 0;
 
   function formatarValor(valor) {
@@ -165,7 +196,9 @@ function ProcedimentosPage() {
             </div>
 
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Procedimentos</h1>
+              <h1 className="text-lg font-bold text-gray-900">
+                Procedimentos
+              </h1>
               <p className="text-xs text-gray-500">
                 Cadastre e organize os procedimentos usados nos agendamentos
               </p>
@@ -178,7 +211,9 @@ function ProcedimentosPage() {
               className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-100"
               title="Recarregar lista"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+              />
               Atualizar
             </button>
 
@@ -253,7 +288,6 @@ function ProcedimentosPage() {
 
             <div className="flex h-9 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-gray-600">
               <BadgeCheck className="mr-2 h-4 w-4 text-blue-500" />
-
               {procedimentosFiltrados.length}{' '}
               {procedimentosFiltrados.length === 1
                 ? 'procedimento encontrado'
@@ -311,14 +345,23 @@ function ProcedimentosPage() {
         }}
         onConfirm={handleDeletar}
         title="Excluir procedimento"
-        message={`Você deseja excluir o procedimento "${procedimentoDeletando?.nome}"? Essa ação não poderá ser desfeita.`}
+        message={`Você deseja excluir o procedimento "${
+          procedimentoDeletando?.nome || ''
+        }"? Essa ação não poderá ser desfeita.`}
         confirmText="Excluir"
       />
     </div>
   );
 }
 
-function ResumoCard({ titulo, valor, descricao, icon: Icon, cor, compactoTexto }) {
+function ResumoCard({
+  titulo,
+  valor,
+  descricao,
+  icon: Icon,
+  cor,
+  compactoTexto,
+}) {
   const cores = {
     blue: {
       box: 'bg-blue-50 border-blue-200',

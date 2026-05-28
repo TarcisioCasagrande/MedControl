@@ -58,7 +58,10 @@ function AgendamentosPage() {
   }, []);
 
   useEffect(() => {
-    if (location.state?.abrirNovoAgendamento && location.state?.agendamentoPreenchido) {
+    if (
+      location.state?.abrirNovoAgendamento &&
+      location.state?.agendamentoPreenchido
+    ) {
       setAgendamentoEditando(null);
       setAgendamentoPreenchido(location.state.agendamentoPreenchido);
       setIsFormModalOpen(true);
@@ -71,18 +74,14 @@ function AgendamentosPage() {
     try {
       setLoading(true);
 
-      const [dadosAgendamentos, dadosMedicos, dadosPacientes] = await Promise.all([
-        getAgendamentos(),
-        getMedicos(),
-        getPacientes(),
-      ]);
+      const [dadosAgendamentos, dadosMedicos, dadosPacientes] =
+        await Promise.all([getAgendamentos(), getMedicos(), getPacientes()]);
 
       setAgendamentos(dadosAgendamentos || []);
       setMedicos(dadosMedicos || []);
       setPacientes(dadosPacientes || []);
-    } catch (error) {
+    } catch {
       toast.error('Não foi possível carregar os agendamentos.');
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -118,14 +117,48 @@ function AgendamentosPage() {
       setIsFormModalOpen(false);
       setAgendamentoEditando(null);
       setAgendamentoPreenchido(null);
+
       await carregarDados();
     } catch (error) {
       const mensagem =
         error?.response?.data?.mensagem || 'Erro ao salvar o agendamento.';
 
       toast.error(mensagem);
-      console.error(error);
     }
+  }
+
+  function normalizarTexto(valor) {
+    return String(valor || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  function possuiPagamentoRealizado(agendamento) {
+    const statusPagamento = normalizarTexto(
+      agendamento?.pagamento?.statusPagamento
+    );
+
+    return Boolean(agendamento?.pagamento && statusPagamento === 'pago');
+  }
+
+  function mensagemBloqueioExclusao(agendamento) {
+    if (possuiPagamentoRealizado(agendamento)) {
+      return 'Não é possível excluir este agendamento porque ele possui pagamento realizado. Cancele, estorne ou remova o pagamento antes de excluir o agendamento.';
+    }
+
+    return '';
+  }
+
+  function mostrarToastAposFecharModal(tipo, mensagem) {
+    setTimeout(() => {
+      if (tipo === 'sucesso') {
+        toast.success(mensagem);
+      } else {
+        toast.error(mensagem);
+      }
+    }, 120);
   }
 
   function handleConfirmarDelete(agendamento) {
@@ -134,23 +167,41 @@ function AgendamentosPage() {
   }
 
   async function handleDeletar() {
+    const mensagem = mensagemBloqueioExclusao(agendamentoDeletando);
+
+    if (mensagem) {
+      setIsDeleteDialogOpen(false);
+      setAgendamentoDeletando(null);
+
+      mostrarToastAposFecharModal('erro', mensagem);
+
+      return;
+    }
+
     try {
       await deletarAgendamento(agendamentoDeletando.id);
-      toast.success('Agendamento removido com sucesso!');
 
       setIsDeleteDialogOpen(false);
       setAgendamentoDeletando(null);
+
       setSelecionados((prev) =>
         prev.filter((id) => id !== agendamentoDeletando.id)
       );
 
+      mostrarToastAposFecharModal(
+        'sucesso',
+        'Agendamento removido com sucesso!'
+      );
+
       await carregarDados();
     } catch (error) {
-      const mensagem =
+      const mensagemErro =
         error?.response?.data?.mensagem || 'Erro ao deletar o agendamento.';
 
-      toast.error(mensagem);
-      console.error(error);
+      setIsDeleteDialogOpen(false);
+      setAgendamentoDeletando(null);
+
+      mostrarToastAposFecharModal('erro', mensagemErro);
     }
   }
 
@@ -169,10 +220,33 @@ function AgendamentosPage() {
         selecionados.includes(agendamento.id)
       );
 
+      const bloqueados = agendamentosSelecionados.filter((agendamento) =>
+        possuiPagamentoRealizado(agendamento)
+      );
+
+      const permitidos = agendamentosSelecionados.filter(
+        (agendamento) => !possuiPagamentoRealizado(agendamento)
+      );
+
+      if (permitidos.length === 0) {
+        setIsBulkDeleteModalOpen(false);
+        setSelecionados(bloqueados.map((item) => item.id));
+
+        mostrarToastAposFecharModal(
+          'erro',
+          bloqueados.length === 1
+            ? mensagemBloqueioExclusao(bloqueados[0])
+            : `${bloqueados.length} agendamentos não podem ser excluídos porque possuem pagamento realizado.`
+        );
+
+        return;
+      }
+
       const resultados = await Promise.allSettled(
-        agendamentosSelecionados.map(async (agendamento) => {
+        permitidos.map(async (agendamento) => {
           try {
             await deletarAgendamento(agendamento.id);
+
             return {
               sucesso: true,
               id: agendamento.id,
@@ -182,7 +256,8 @@ function AgendamentosPage() {
               sucesso: false,
               id: agendamento.id,
               mensagem:
-                error?.response?.data?.mensagem || 'Erro ao excluir agendamento.',
+                error?.response?.data?.mensagem ||
+                'Erro ao excluir agendamento.',
             };
           }
         })
@@ -198,42 +273,48 @@ function AgendamentosPage() {
         .map((resultado) => resultado.value)
         .filter((item) => !item.sucesso);
 
-      if (sucessos.length > 0 && falhas.length === 0) {
-        toast.success(
+      const idsComFalha = [
+        ...falhas.map((item) => item.id),
+        ...bloqueados.map((item) => item.id),
+      ];
+
+      setSelecionados(idsComFalha);
+      setIsBulkDeleteModalOpen(false);
+
+      if (sucessos.length > 0 && falhas.length === 0 && bloqueados.length === 0) {
+        mostrarToastAposFecharModal(
+          'sucesso',
           `${sucessos.length} ${
             sucessos.length === 1
               ? 'agendamento excluído com sucesso!'
               : 'agendamentos excluídos com sucesso!'
           }`
         );
-      } else if (sucessos.length > 0 && falhas.length > 0) {
-        toast.success(
+      } else if (sucessos.length > 0) {
+        mostrarToastAposFecharModal(
+          'sucesso',
           `${sucessos.length} ${
             sucessos.length === 1
               ? 'agendamento excluído'
               : 'agendamentos excluídos'
-          }. ${falhas.length} ${
-            falhas.length === 1
+          }. ${falhas.length + bloqueados.length} ${
+            falhas.length + bloqueados.length === 1
               ? 'não pôde ser excluído.'
               : 'não puderam ser excluídos.'
           }`
         );
       } else if (falhas.length > 0) {
-        toast.error(falhas[0].mensagem);
+        mostrarToastAposFecharModal('erro', falhas[0].mensagem);
       }
 
-      const idsComFalha = falhas.map((item) => item.id);
-      setSelecionados(idsComFalha);
-
-      setIsBulkDeleteModalOpen(false);
       await carregarDados();
     } catch (error) {
       const mensagem =
         error?.response?.data?.mensagem ||
         'Erro ao excluir os agendamentos selecionados.';
 
-      toast.error(mensagem);
-      console.error(error);
+      setIsBulkDeleteModalOpen(false);
+      mostrarToastAposFecharModal('erro', mensagem);
     } finally {
       setBulkDeleting(false);
     }
@@ -466,7 +547,7 @@ function AgendamentosPage() {
           selecionados.length === 1
             ? 'agendamento selecionado'
             : 'agendamentos selecionados'
-        }? Agendamentos com prontuário vinculado não poderão ser excluídos.`}
+        }? Agendamentos com pagamento realizado não poderão ser excluídos.`}
         confirmText="Excluir"
         loading={bulkDeleting}
       />

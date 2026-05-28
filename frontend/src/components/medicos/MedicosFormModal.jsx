@@ -34,7 +34,7 @@ function MedicoFormModal({ isOpen, onClose, medicoEditando, onSalvar }) {
 
     if (medicoEditando) {
       setNome(medicoEditando.nome || '');
-      setCrm(medicoEditando.crm || '');
+      setCrm(formatarCRM(medicoEditando.crm || ''));
       setEspecialidade(medicoEditando.especialidade || '');
       setTelefone(formatarTelefone(medicoEditando.telefone || ''));
       setEmail(medicoEditando.email || '');
@@ -68,6 +68,10 @@ function MedicoFormModal({ isOpen, onClose, medicoEditando, onSalvar }) {
     setTelefone(formatarTelefone(e.target.value));
   }
 
+  function handleCrmChange(e) {
+    setCrm(formatarCRM(e.target.value));
+  }
+
   function handleEmailChange(e) {
     setEmail(e.target.value.trim().toLowerCase());
   }
@@ -90,8 +94,8 @@ function MedicoFormModal({ isOpen, onClose, medicoEditando, onSalvar }) {
       return false;
     }
 
-    if (!crm.trim()) {
-      abrirAviso('Campo obrigatório', 'Informe o CRM do médico.');
+    if (!crmValido(crm)) {
+      abrirAviso('CRM inválido', 'Informe o CRM no formato 123456-SC.');
       return false;
     }
 
@@ -120,6 +124,7 @@ function MedicoFormModal({ isOpen, onClose, medicoEditando, onSalvar }) {
 
     if (medicoEditando) {
       medico.id = medicoEditando.id;
+      medico.ativo = medicoEditando.ativo ?? true;
     }
 
     onSalvar(medico);
@@ -232,11 +237,12 @@ function MedicoFormModal({ isOpen, onClose, medicoEditando, onSalvar }) {
                 <Campo
                   label="CRM"
                   value={crm}
-                  onChange={(e) => setCrm(e.target.value.toUpperCase())}
+                  onChange={handleCrmChange}
                   required
                   icon={Briefcase}
-                  placeholder="Ex: CRM-SC-12345"
-                  maxLength={30}
+                  placeholder="Ex: 123456-SC"
+                  maxLength={9}
+                  inputMode="text"
                 />
 
                 <Campo
@@ -428,6 +434,23 @@ function formatarTelefone(valor) {
   return numeros
     .replace(/^(\d{2})(\d)/, '($1) $2')
     .replace(/^(\(\d{2}\) \d{5})(\d)/, '$1-$2');
+}
+
+function formatarCRM(valor) {
+  const texto = String(valor || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+
+  const numeros = texto.replace(/\D/g, '').slice(0, 6);
+  const letras = texto.replace(/[^A-Z]/g, '').slice(0, 2);
+
+  if (letras.length > 0) {
+    return `${numeros}-${letras}`;
+  }
+
+  return numeros;
+}
+
+function crmValido(valor) {
+  return /^\d{1,6}-[A-Z]{2}$/.test(String(valor || '').trim().toUpperCase());
 }
 
 function emailValido(valor) {

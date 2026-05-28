@@ -143,7 +143,6 @@ function UsuariosPage() {
         error?.response?.data?.mensagem || 'Não foi possível carregar os usuários.',
         'erro'
       );
-      console.error(error);
     } finally {
       setCarregando(false);
     }
@@ -276,7 +275,6 @@ function UsuariosPage() {
         error?.response?.data?.mensagem || 'Erro ao salvar usuário.',
         'erro'
       );
-      console.error(error);
     } finally {
       setSalvando(false);
     }
@@ -304,13 +302,40 @@ function UsuariosPage() {
             error?.response?.data?.mensagem || 'Erro ao alterar status.',
             'erro'
           );
-          console.error(error);
         }
       },
     });
   }
 
-  function removerUsuario(id) {
+  function usuarioPossuiVinculos(usuario) {
+    return Boolean(
+      usuario?.possuiAgendamentosCriados ||
+        usuario?.possuiAgendamentosComoMedico
+    );
+  }
+
+  function mensagemVinculoUsuario(usuario) {
+    if (usuario?.possuiAgendamentosComoMedico) {
+      return 'Não é possível excluir este usuário porque o médico possui agendamentos vinculados.';
+    }
+
+    if (usuario?.possuiAgendamentosCriados) {
+      return 'Não é possível excluir este usuário porque ele possui agendamentos criados.';
+    }
+
+    return 'Não é possível excluir este usuário porque existem vínculos cadastrados.';
+  }
+
+  function removerUsuario(usuario) {
+    if (usuarioPossuiVinculos(usuario)) {
+      abrirAviso(
+        'Erro ao excluir usuário',
+        mensagemVinculoUsuario(usuario),
+        'erro'
+      );
+      return;
+    }
+
     abrirConfirmacao({
       titulo: 'Excluir usuário',
       mensagem:
@@ -319,7 +344,7 @@ function UsuariosPage() {
       tipo: 'perigo',
       onConfirm: async () => {
         try {
-          await excluirUsuario(id);
+          await excluirUsuario(usuario.id);
           await carregarDados();
 
           abrirAviso(
@@ -333,7 +358,6 @@ function UsuariosPage() {
             error?.response?.data?.mensagem || 'Erro ao excluir usuário.',
             'erro'
           );
-          console.error(error);
         }
       },
     });
@@ -382,14 +406,14 @@ function UsuariosPage() {
         <div className="rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm lg:px-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
             <div className="flex h-11 items-center gap-2 rounded-lg border border-gray-300 px-3">
-            <Search className="h-4 w-4 text-gray-400" />
-            <input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar por nome, e-mail ou perfil..."
-              className="h-full w-full border-none bg-transparent text-xs outline-none sm:text-sm"
-            />
-          </div>
+              <Search className="h-4 w-4 text-gray-400" />
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Buscar por nome, e-mail ou perfil..."
+                className="h-full w-full border-none bg-transparent text-xs outline-none sm:text-sm"
+              />
+            </div>
 
             <div className="flex min-h-11 items-center rounded-lg border border-gray-200 bg-gray-50 px-4 text-xs text-gray-600">
               <UserCog className="mr-2 h-4 w-4 text-sky-600" />
@@ -420,7 +444,7 @@ function UsuariosPage() {
                       usuario={usuario}
                       onEditar={() => abrirEdicao(usuario)}
                       onAlternarStatus={() => alternarStatus(usuario.id)}
-                      onRemover={() => removerUsuario(usuario.id)}
+                      onRemover={() => removerUsuario(usuario)}
                     />
                   ))
                 )}
@@ -480,10 +504,12 @@ function UsuariosPage() {
                             <BotaoAcao onClick={() => abrirEdicao(usuario)} titulo="Editar" cor="blue">
                               <Pencil className="h-4 w-4" />
                             </BotaoAcao>
+
                             <BotaoAcao onClick={() => alternarStatus(usuario.id)} titulo="Ativar/Inativar" cor="amber">
                               <Power className="h-4 w-4" />
                             </BotaoAcao>
-                            <BotaoAcao onClick={() => removerUsuario(usuario.id)} titulo="Excluir" cor="red">
+
+                            <BotaoAcao onClick={() => removerUsuario(usuario)} titulo="Excluir" cor="red">
                               <Trash2 className="h-4 w-4" />
                             </BotaoAcao>
                           </div>
@@ -536,43 +562,13 @@ function UsuariosPage() {
 
             <form onSubmit={salvarUsuario} className="flex min-h-0 flex-1 flex-col">
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-gray-50 p-5">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">
-                  Nome
-                </label>
-                <input
-                  value={form.nome}
-                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                  className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">
-                  E-mail
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-600">
-                    Senha *
+                    Nome
                   </label>
-
                   <input
-                    type="password"
-                    value={form.senha}
-                    onChange={(e) =>
-                      setForm({ ...form, senha: e.target.value })
-                    }
+                    value={form.nome}
+                    onChange={(e) => setForm({ ...form, nome: e.target.value })}
                     className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
                     required
                   />
@@ -580,104 +576,133 @@ function UsuariosPage() {
 
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-600">
-                    Confirmar senha *
+                    E-mail
                   </label>
-
                   <input
-                    type="password"
-                    value={form.confirmarSenha}
-                    onChange={(e) =>
-                      setForm({ ...form, confirmarSenha: e.target.value })
-                    }
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
                     required
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">
-                  Perfil
-                </label>
-                <select
-                  value={form.perfil}
-                  onChange={(e) => alterarPerfil(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
-                >
-                  {perfis.map((perfil) => (
-                    <option key={perfil.valor} value={perfil.valor}>
-                      {perfil.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Senha *
+                    </label>
 
-              {Number(form.perfil) === 3 && (
-                <div
-                  className={`rounded-lg border p-3 ${
-                    editando && form.medicoId
-                      ? 'border-slate-300 bg-slate-100'
-                      : 'border-sky-100 bg-sky-50'
-                  }`}
-                >
-                  <label
-                    className={`mb-1 block text-xs font-bold ${
-                      editando && form.medicoId
-                        ? 'text-slate-700'
-                        : 'text-sky-800'
-                    }`}
-                  >
-                    Vincular ao médico *
+                    <input
+                      type="password"
+                      value={form.senha}
+                      onChange={(e) =>
+                        setForm({ ...form, senha: e.target.value })
+                      }
+                      className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Confirmar senha *
+                    </label>
+
+                    <input
+                      type="password"
+                      value={form.confirmarSenha}
+                      onChange={(e) =>
+                        setForm({ ...form, confirmarSenha: e.target.value })
+                      }
+                      className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    Perfil
                   </label>
-
                   <select
-                    value={form.medicoId}
-                    onChange={(e) =>
-                      setForm({ ...form, medicoId: e.target.value })
-                    }
-                    disabled={editando && Boolean(form.medicoId)}
-                    className={`h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-sky-500 ${
-                      editando && form.medicoId
-                        ? 'cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500'
-                        : 'border-sky-200 bg-white'
-                    }`}
-                    required
+                    value={form.perfil}
+                    onChange={(e) => alterarPerfil(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-sky-500"
                   >
-                    <option value="">Selecione o médico (obrigatório)</option>
-
-                    {medicos.map((medico) => (
-                      <option key={medico.id} value={medico.id}>
-                        {medico.nome}{' '}
-                        {medico.email ? `- ${medico.email}` : ''}
+                    {perfis.map((perfil) => (
+                      <option key={perfil.valor} value={perfil.valor}>
+                        {perfil.label}
                       </option>
                     ))}
                   </select>
+                </div>
 
-                  <p
-                    className={`mt-2 text-[11px] ${
+                {Number(form.perfil) === 3 && (
+                  <div
+                    className={`rounded-lg border p-3 ${
                       editando && form.medicoId
-                        ? 'font-semibold text-slate-600'
-                        : 'text-sky-700'
+                        ? 'border-slate-300 bg-slate-100'
+                        : 'border-sky-100 bg-sky-50'
                     }`}
                   >
-                    {editando && form.medicoId
-                      ? 'Este vínculo já foi definido e não pode ser alterado.'
-                      : 'Esse vínculo é obrigatório para que o médico veja somente os próprios agendamentos.'}
-                  </p>
-                </div>
-              )}
+                    <label
+                      className={`mb-1 block text-xs font-bold ${
+                        editando && form.medicoId
+                          ? 'text-slate-700'
+                          : 'text-sky-800'
+                      }`}
+                    >
+                      Vincular ao médico *
+                    </label>
 
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="checkbox"
-                  checked={form.ativo}
-                  onChange={(e) =>
-                    setForm({ ...form, ativo: e.target.checked })
-                  }
-                />
-                Usuário ativo
-              </label>
+                    <select
+                      value={form.medicoId}
+                      onChange={(e) =>
+                        setForm({ ...form, medicoId: e.target.value })
+                      }
+                      disabled={editando && Boolean(form.medicoId)}
+                      className={`h-9 w-full rounded-lg border px-3 text-sm outline-none focus:border-sky-500 ${
+                        editando && form.medicoId
+                          ? 'cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500'
+                          : 'border-sky-200 bg-white'
+                      }`}
+                      required
+                    >
+                      <option value="">Selecione o médico (obrigatório)</option>
 
+                      {medicos.map((medico) => (
+                        <option key={medico.id} value={medico.id}>
+                          {medico.nome}{' '}
+                          {medico.email ? `- ${medico.email}` : ''}
+                        </option>
+                      ))}
+                    </select>
+
+                    <p
+                      className={`mt-2 text-[11px] ${
+                        editando && form.medicoId
+                          ? 'font-semibold text-slate-600'
+                          : 'text-sky-700'
+                      }`}
+                    >
+                      {editando && form.medicoId
+                        ? 'Este vínculo já foi definido e não pode ser alterado.'
+                        : 'Esse vínculo é obrigatório para que o médico veja somente os próprios agendamentos.'}
+                    </p>
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={form.ativo}
+                    onChange={(e) =>
+                      setForm({ ...form, ativo: e.target.checked })
+                    }
+                  />
+                  Usuário ativo
+                </label>
               </div>
 
               <div className="flex flex-col-reverse gap-2 border-t border-gray-200 bg-white px-5 py-4 sm:flex-row sm:justify-end">
@@ -712,8 +737,6 @@ function UsuariosPage() {
     </div>
   );
 }
-
-
 
 function ResumoCard({ titulo, valor, descricao, tipo }) {
   const estilos = {

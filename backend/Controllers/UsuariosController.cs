@@ -35,7 +35,14 @@ namespace MeuCrud.Api.Controllers
                     MedicoId = _context.Medicos
                         .Where(m => m.UsuarioId == u.Id)
                         .Select(m => (int?)m.Id)
-                        .FirstOrDefault()
+                        .FirstOrDefault(),
+
+                    PossuiAgendamentosCriados = _context.Agendamentos
+                        .Any(a => a.CriadoPorUsuarioId == u.Id),
+
+                    PossuiAgendamentosComoMedico = _context.Medicos
+                        .Where(m => m.UsuarioId == u.Id)
+                        .Any(m => _context.Agendamentos.Any(a => a.MedicoId == m.Id))
                 })
                 .ToListAsync();
 
@@ -58,7 +65,14 @@ namespace MeuCrud.Api.Controllers
                     MedicoId = _context.Medicos
                         .Where(m => m.UsuarioId == u.Id)
                         .Select(m => (int?)m.Id)
-                        .FirstOrDefault()
+                        .FirstOrDefault(),
+
+                    PossuiAgendamentosCriados = _context.Agendamentos
+                        .Any(a => a.CriadoPorUsuarioId == u.Id),
+
+                    PossuiAgendamentosComoMedico = _context.Medicos
+                        .Where(m => m.UsuarioId == u.Id)
+                        .Any(m => _context.Agendamentos.Any(a => a.MedicoId == m.Id))
                 })
                 .FirstOrDefaultAsync();
 
@@ -108,7 +122,9 @@ namespace MeuCrud.Api.Controllers
                 Perfil = usuario.Perfil.ToString(),
                 usuario.Ativo,
                 usuario.DataCriacao,
-                dto.MedicoId
+                dto.MedicoId,
+                PossuiAgendamentosCriados = false,
+                PossuiAgendamentosComoMedico = false
             });
         }
 
@@ -206,7 +222,7 @@ namespace MeuCrud.Api.Controllers
                 {
                     return BadRequest(new
                     {
-                        mensagem = "Não é possível excluir este usuário porque o médico possui agendamentos vinculados. Inative o usuário."
+                        mensagem = "Não é possível excluir este usuário porque o médico possui agendamentos vinculados."
                     });
                 }
 
@@ -220,7 +236,7 @@ namespace MeuCrud.Api.Controllers
             {
                 return BadRequest(new
                 {
-                    mensagem = "Não é possível excluir este usuário porque ele possui agendamentos criados. Inative o usuário."
+                    mensagem = "Não é possível excluir este usuário porque ele possui agendamentos criados."
                 });
             }
 

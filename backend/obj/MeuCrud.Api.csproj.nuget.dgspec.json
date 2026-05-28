@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj": {}
+    "/home/tarcisio/Documentos/ControlMed/MedControl/backend/MeuCrud.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj": {
+    "/home/tarcisio/Documentos/ControlMed/MedControl/backend/MeuCrud.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj",
+        "projectUniqueName": "/home/tarcisio/Documentos/ControlMed/MedControl/backend/MeuCrud.Api.csproj",
         "projectName": "MeuCrud.Api",
-        "projectPath": "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\MeuCrud.Api.csproj",
-        "packagesPath": "C:\\Users\\Pierri\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Pierri\\Downloads\\MedControl\\backend\\obj\\",
+        "projectPath": "/home/tarcisio/Documentos/ControlMed/MedControl/backend/MeuCrud.Api.csproj",
+        "packagesPath": "/home/tarcisio/.nuget/packages/",
+        "outputPath": "/home/tarcisio/Documentos/ControlMed/MedControl/backend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Pierri\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/tarcisio/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -32,11 +32,6 @@
           "warnAsError": [
             "NU1605"
           ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -97,7 +92,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.127/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
