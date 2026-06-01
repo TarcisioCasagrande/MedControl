@@ -1,10 +1,22 @@
 // src/components/agenda/AgendaResumoCards.jsx
 import { normalizarStatus } from './utils/agendaStatus';
+import { montarDataDoInput } from './utils/agendaFormatters';
+import {
+  gerarSlotsDoMedicoPorDia,
+  obterDiasDoPeriodo,
+} from './utils/agendaSlots';
 
 function AgendaResumoCards({
   medicoFiltro,
   agendamentosExibidosMedico,
   agendamentosDoDiaTodosMedicos,
+  agendamentos,
+  medicosVisiveis,
+  disponibilidades,
+  modoVisualizacao,
+  dataReferencia,
+  dataInicialTodosMedicos,
+  dataFinalTodosMedicos,
 }) {
   const agendamentosBase = medicoFiltro
     ? agendamentosExibidosMedico
@@ -15,34 +27,26 @@ function AgendaResumoCards({
     return status === 'agendado' || status === 'agendada';
   }).length;
 
-  const recepcionados = agendamentosBase.filter((agendamento) => {
+  const liberadosParaMedico = agendamentosBase.filter((agendamento) => {
     const status = normalizarStatus(agendamento.status);
 
     return (
       status === 'atendidorecepcao' ||
       status === 'atendido' ||
-      status === 'atendida' ||
-      status === 'emandamento' ||
-      status === 'ematendimentomedico' ||
-      status === 'finalizado' ||
-      status === 'finalizada'
+      status === 'atendida'
     );
   }).length;
 
-  const emAtendimento = agendamentosBase.filter((agendamento) => {
-    const status = normalizarStatus(agendamento.status);
-    return status === 'emandamento' || status === 'ematendimentomedico';
-  }).length;
-
-  const faturamentoPrevisto = agendamentosBase.reduce((total, agendamento) => {
-    const valor =
-      Number(agendamento.valorCobrado) ||
-      Number(agendamento.procedimento?.valor) ||
-      Number(agendamento.procedimentoValor) ||
-      0;
-
-    return total + valor;
-  }, 0);
+  const horariosLivres = calcularHorariosLivres({
+    medicoFiltro,
+    agendamentos,
+    medicosVisiveis,
+    disponibilidades,
+    modoVisualizacao,
+    dataReferencia,
+    dataInicialTodosMedicos,
+    dataFinalTodosMedicos,
+  });
 
   return (
     <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -57,16 +61,72 @@ function AgendaResumoCards({
       />
 
       <ResumoTopo
-        label="Liberados para o Médico"
-        valor={recepcionados}
+        label="Liberados para o médico"
+        valor={liberadosParaMedico}
       />
 
       <ResumoTopo
-        label="Faturamento previsto"
-        valor={formatarMoeda(faturamentoPrevisto)}
+        label="Horários livres"
+        valor={horariosLivres}
       />
     </div>
   );
+}
+
+function calcularHorariosLivres({
+  medicoFiltro,
+  agendamentos,
+  medicosVisiveis,
+  disponibilidades,
+  modoVisualizacao,
+  dataReferencia,
+  dataInicialTodosMedicos,
+  dataFinalTodosMedicos,
+}) {
+  const medicosParaCalculo = medicoFiltro
+    ? medicosVisiveis.filter((medico) => String(medico.id) === String(medicoFiltro))
+    : medicosVisiveis;
+
+  const diasParaCalculo = medicoFiltro
+    ? obterDiasDoPeriodo(dataReferencia, modoVisualizacao)
+    : gerarDiasEntreDatas(dataInicialTodosMedicos, dataFinalTodosMedicos);
+
+  let totalLivres = 0;
+
+  diasParaCalculo.forEach((dia) => {
+    medicosParaCalculo.forEach((medico) => {
+      const slots = gerarSlotsDoMedicoPorDia(
+        medico,
+        dia,
+        agendamentos,
+        disponibilidades
+      );
+
+      totalLivres += slots.filter((slot) => !slot.agendamento).length;
+    });
+  });
+
+  return totalLivres;
+}
+
+function gerarDiasEntreDatas(dataInicialTexto, dataFinalTexto) {
+  if (!dataInicialTexto || !dataFinalTexto) return [];
+
+  const inicial = montarDataDoInput(dataInicialTexto);
+  const final = montarDataDoInput(dataFinalTexto);
+
+  const inicio = inicial <= final ? inicial : final;
+  const fim = inicial <= final ? final : inicial;
+
+  const dias = [];
+  let atual = new Date(inicio);
+
+  while (atual <= fim) {
+    dias.push(new Date(atual));
+    atual.setDate(atual.getDate() + 1);
+  }
+
+  return dias;
 }
 
 function ResumoTopo({ label, valor }) {
@@ -80,13 +140,6 @@ function ResumoTopo({ label, valor }) {
       </p>
     </div>
   );
-}
-
-function formatarMoeda(valor) {
-  return Number(valor || 0).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
 }
 
 export default AgendaResumoCards;

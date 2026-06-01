@@ -2,6 +2,7 @@
 import { useMemo } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import AgendaSlotsLista from './AgendaSlotsLista';
+import { normalizarStatus } from './utils/agendaStatus';
 import {
   formatarDataInput,
   formatarDataCurta,
@@ -30,10 +31,27 @@ export default function AgendaPorDias({
   onAbrirAgendamento,
   onAbrirLivre,
   onAbrirDisponibilidade,
+  statusFiltro,
 }) {
   const dias = useMemo(() => {
     return obterDiasDoPeriodo(dataReferencia, modoVisualizacao);
   }, [dataReferencia, modoVisualizacao]);
+
+  function filtrarSlotsPorStatus(slots) {
+    const statusNormalizado = normalizarStatus(statusFiltro);
+
+    if (!statusNormalizado) return slots;
+
+    if (statusNormalizado === 'livre') {
+      return slots.filter((slot) => !slot.agendamento);
+    }
+
+    return slots.filter(
+      (slot) =>
+        slot.agendamento &&
+        normalizarStatus(slot.agendamento.status) === statusNormalizado
+    );
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl bg-gray-50">
@@ -167,6 +185,8 @@ export default function AgendaPorDias({
                 disponibilidades
               );
 
+              const slotsFiltrados = filtrarSlotsPorStatus(slots);
+
               return (
                 <div
                   key={formatarDataInput(dia)}
@@ -177,7 +197,7 @@ export default function AgendaPorDias({
                   <AgendaSlotsLista
                     medico={medico}
                     dia={dia}
-                    slots={slots}
+                    slots={slotsFiltrados}
                     textoVazio="Nenhuma disponibilidade"
                     onAbrirAgendamento={onAbrirAgendamento}
                     onAbrirLivre={onAbrirLivre}

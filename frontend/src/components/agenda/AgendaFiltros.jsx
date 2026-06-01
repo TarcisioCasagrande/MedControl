@@ -88,6 +88,7 @@ function AgendaFiltros({
           <option value="EmAndamento">Em atendimento</option>
           <option value="Finalizada">Finalizada</option>
           <option value="Cancelada">Cancelada</option>
+          <option value="Livre">Livre</option>
         </select>
 
         <input

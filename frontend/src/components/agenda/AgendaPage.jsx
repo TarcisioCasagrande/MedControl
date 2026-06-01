@@ -28,6 +28,7 @@ import AgendamentoFormModal from '../agendamentos/AgendamentosFormModal';
 import AgendaFiltros from './AgendaFiltros';
 import AgendaResumoCards from './AgendaResumoCards';
 import AgendaPorDias from './AgendaPorDias';
+import AgendaTabelaMedicos from './AgendaTabelaMedicos';
 import AgendaPorAbasDias from './AgendaPorAbasDias';
 import DisponibilidadeRapidaModal from './DisponibilidadeRapidaModal';
 import AtendimentoRecepcaoModal from './AtendimentoRecepcaoModal';
@@ -68,27 +69,22 @@ function AgendaPage() {
 
   const [modoVisualizacao, setModoVisualizacao] = useState('semana');
   const [dataReferencia, setDataReferencia] = useState(new Date());
-
   const [dataFiltroTodosMedicos, setDataFiltroTodosMedicos] = useState(
     formatarDataInput(new Date())
   );
-
   const [dataFinalTodosMedicos, setDataFinalTodosMedicos] = useState(
     formatarDataInput(new Date())
   );
-
-  const [dataSelecionadaAbaTodosMedicos, setDataSelecionadaAbaTodosMedicos] =
-    useState(formatarDataInput(new Date()));
+  const [dataSelecionadaAbaTodosMedicos, setDataSelecionadaAbaTodosMedicos] = useState(
+    formatarDataInput(new Date())
+  );
 
   const [modalAgendamentoAberto, setModalAgendamentoAberto] = useState(false);
   const [agendamentoPreenchido, setAgendamentoPreenchido] = useState(null);
 
-  const [modalDisponibilidadeAberto, setModalDisponibilidadeAberto] =
-    useState(false);
-  const [disponibilidadePreenchida, setDisponibilidadePreenchida] =
-    useState(null);
-  const [salvandoDisponibilidade, setSalvandoDisponibilidade] =
-    useState(false);
+  const [modalDisponibilidadeAberto, setModalDisponibilidadeAberto] = useState(false);
+  const [disponibilidadePreenchida, setDisponibilidadePreenchida] = useState(null);
+  const [salvandoDisponibilidade, setSalvandoDisponibilidade] = useState(false);
 
   const [modalAtendimentoAberto, setModalAtendimentoAberto] = useState(false);
   const [agendamentoSelecionado, setAgendamentoSelecionado] = useState(null);
@@ -96,9 +92,7 @@ function AgendaPage() {
     { id: gerarIdLocal(), formaPagamento: 'Pix', valor: '0.00' },
   ]);
   const [statusPagamento, setStatusPagamento] = useState('Pago');
-  const [dataPagamento, setDataPagamento] = useState(
-    formatarDataHoraInputLocal(new Date())
-  );
+  const [dataPagamento, setDataPagamento] = useState(formatarDataHoraInputLocal(new Date()));
   const [observacaoPagamento, setObservacaoPagamento] = useState('');
   const [tipoDesconto, setTipoDesconto] = useState('Nenhum');
   const [valorDesconto, setValorDesconto] = useState('0');
@@ -233,11 +227,7 @@ function AgendaPage() {
     setDataPagamento(
       formatarDataHoraInputLocal(pagamentoExistente?.dataPagamento || new Date())
     );
-    setObservacaoPagamento(
-      removerResumoFinanceiroDasObservacoes(
-        pagamentoExistente?.observacoes || ''
-      )
-    );
+    setObservacaoPagamento(removerResumoFinanceiroDasObservacoes(pagamentoExistente?.observacoes || ''));
     setTipoDesconto('Nenhum');
     setValorDesconto('0');
     setModalAtendimentoAberto(true);
@@ -248,9 +238,7 @@ function AgendaPage() {
 
     setModalAtendimentoAberto(false);
     setAgendamentoSelecionado(null);
-    setFormasPagamento([
-      { id: gerarIdLocal(), formaPagamento: 'Pix', valor: '0.00' },
-    ]);
+    setFormasPagamento([{ id: gerarIdLocal(), formaPagamento: 'Pix', valor: '0.00' }]);
     setStatusPagamento('Pago');
     setDataPagamento(formatarDataHoraInputLocal(new Date()));
     setObservacaoPagamento('');
@@ -268,11 +256,7 @@ function AgendaPage() {
 
       await carregarDados();
     } catch (error) {
-      toast.error(
-        error?.response?.data?.mensagem ||
-          error?.mensagem ||
-          'Erro ao salvar agendamento.'
-      );
+      toast.error(error?.response?.data?.mensagem || error?.mensagem || 'Erro ao salvar agendamento.');
       console.error(error);
     }
   }
@@ -297,9 +281,7 @@ function AgendaPage() {
       }
 
       if (resumoFinanceiro.totalPago <= 0) {
-        toast.error(
-          'Informe pelo menos uma forma de pagamento com valor maior que zero.'
-        );
+        toast.error('Informe pelo menos uma forma de pagamento com valor maior que zero.');
         return;
       }
 
@@ -309,11 +291,7 @@ function AgendaPage() {
       }
 
       if (resumoFinanceiro.diferenca < -0.009) {
-        toast.error(
-          `O valor pago ultrapassa o valor final em ${formatarMoeda(
-            Math.abs(resumoFinanceiro.diferenca)
-          )}.`
-        );
+        toast.error(`O valor pago ultrapassa o valor final em ${formatarMoeda(Math.abs(resumoFinanceiro.diferenca))}.`);
         return;
       }
 
@@ -443,10 +421,7 @@ function AgendaPage() {
     setDataFiltroTodosMedicos(dia);
     setDataSelecionadaAbaTodosMedicos(dia);
 
-    if (
-      !dataFinalTodosMedicos ||
-      montarDataDoInput(dataFinalTodosMedicos) < montarDataDoInput(dia)
-    ) {
+    if (!dataFinalTodosMedicos || montarDataDoInput(dataFinalTodosMedicos) < montarDataDoInput(dia)) {
       setDataFinalTodosMedicos(dia);
     }
   }
@@ -462,26 +437,21 @@ function AgendaPage() {
       return;
     }
 
-    if (
-      montarDataDoInput(dataSelecionadaAbaTodosMedicos) > montarDataDoInput(dia)
-    ) {
+    if (montarDataDoInput(dataSelecionadaAbaTodosMedicos) > montarDataDoInput(dia)) {
       setDataSelecionadaAbaTodosMedicos(dia);
     }
   }
 
   function limparFiltros() {
     const hoje = new Date();
-    const hojeInput = formatarDataInput(hoje);
 
     setBusca('');
     setStatusFiltro('');
-    setMedicoFiltro(
-      usuarioEhMedico && medicosVisiveis[0] ? String(medicosVisiveis[0].id) : ''
-    );
+    setMedicoFiltro(usuarioEhMedico && medicosVisiveis[0] ? String(medicosVisiveis[0].id) : '');
     setDataReferencia(hoje);
-    setDataFiltroTodosMedicos(hojeInput);
-    setDataFinalTodosMedicos(hojeInput);
-    setDataSelecionadaAbaTodosMedicos(hojeInput);
+    setDataFiltroTodosMedicos(formatarDataInput(hoje));
+    setDataFinalTodosMedicos(formatarDataInput(hoje));
+    setDataSelecionadaAbaTodosMedicos(formatarDataInput(hoje));
   }
 
   function irHoje() {
@@ -496,6 +466,7 @@ function AgendaPage() {
     setDataReferencia((data) => movimentarData(data, modoVisualizacao, 1));
   }
 
+
   const medicosVisiveis = useMemo(() => {
     if (!usuarioEhMedico) return medicos;
 
@@ -503,10 +474,8 @@ function AgendaPage() {
     const usuarioId = String(usuario?.id || '');
 
     return medicos.filter((medico) => {
-      const mesmoUsuarioId =
-        medico.usuarioId && String(medico.usuarioId) === usuarioId;
-      const mesmoEmail =
-        emailUsuario && (medico.email || '').toLowerCase() === emailUsuario;
+      const mesmoUsuarioId = medico.usuarioId && String(medico.usuarioId) === usuarioId;
+      const mesmoEmail = emailUsuario && (medico.email || '').toLowerCase() === emailUsuario;
 
       return mesmoUsuarioId || mesmoEmail;
     });
@@ -523,6 +492,7 @@ function AgendaPage() {
       setDataReferencia(montarDataDoInput(dataFiltroTodosMedicos));
     }
   }, [usuarioEhMedico, medicosVisiveis, medicoFiltro, dataFiltroTodosMedicos]);
+
 
   useEffect(() => {
     if (medicoFiltro) return;
@@ -556,9 +526,12 @@ function AgendaPage() {
 
       const bateBusca = texto.includes(busca.toLowerCase());
 
-      const bateStatus = statusFiltro
-        ? normalizarStatus(agendamento.status) === normalizarStatus(statusFiltro)
-        : true;
+      const statusNormalizado = normalizarStatus(statusFiltro);
+
+      const bateStatus =
+        statusNormalizado && statusNormalizado !== 'livre'
+          ? normalizarStatus(agendamento.status) === statusNormalizado
+          : true;
 
       const bateMedico = medicoFiltro
         ? String(agendamento.medicoId ?? agendamento.medico?.id) ===
@@ -576,8 +549,7 @@ function AgendaPage() {
   const agendamentosDoDiaTodosMedicos = useMemo(() => {
     return agendamentosFiltrados.filter(
       (agendamento) =>
-        formatarDataInput(agendamento.dataAgendamento) ===
-        dataSelecionadaAbaTodosMedicos
+        formatarDataInput(agendamento.dataAgendamento) === dataSelecionadaAbaTodosMedicos
     );
   }, [agendamentosFiltrados, dataSelecionadaAbaTodosMedicos]);
 
@@ -594,9 +566,7 @@ function AgendaPage() {
   }, [agendamentosFiltrados, medicoFiltro, dataReferencia, modoVisualizacao]);
 
   const medicoSelecionado = useMemo(() => {
-    return medicosVisiveis.find(
-      (medico) => String(medico.id) === String(medicoFiltro)
-    );
+    return medicosVisiveis.find((medico) => String(medico.id) === String(medicoFiltro));
   }, [medicosVisiveis, medicoFiltro]);
 
   return (
@@ -628,6 +598,10 @@ function AgendaPage() {
           agendamentos={agendamentos}
           medicosVisiveis={medicosVisiveis}
           disponibilidades={disponibilidades}
+          modoVisualizacao={modoVisualizacao}
+          dataReferencia={dataReferencia}
+          dataInicialTodosMedicos={dataFiltroTodosMedicos}
+          dataFinalTodosMedicos={dataFinalTodosMedicos}
         />
       </section>
 
@@ -640,24 +614,17 @@ function AgendaPage() {
           <AgendaPorDias
             medico={medicoSelecionado}
             agendamentos={agendamentosFiltrados}
-            disponibilidades={
-              usuarioEhMedico
-                ? disponibilidades.filter(
-                    (item) => String(item.medicoId) === String(medicoSelecionado.id)
-                  )
-                : disponibilidades
-            }
+            disponibilidades={usuarioEhMedico ? disponibilidades.filter((item) => String(item.medicoId) === String(medicoSelecionado.id)) : disponibilidades}
             modoVisualizacao={modoVisualizacao}
             setModoVisualizacao={setModoVisualizacao}
             dataReferencia={dataReferencia}
+            statusFiltro={statusFiltro}
             onHoje={irHoje}
             onVoltar={voltarPeriodo}
             onAvancar={avancarPeriodo}
             onAbrirAgendamento={abrirModalAtendimento}
             onAbrirLivre={usuarioEhMedico ? null : abrirCadastroAgendamentoLivre}
-            onAbrirDisponibilidade={
-              usuarioEhMedico ? null : abrirCadastroDisponibilidade
-            }
+            onAbrirDisponibilidade={usuarioEhMedico ? null : abrirCadastroDisponibilidade}
           />
         ) : usuarioEhMedico ? (
           <div className="flex h-full items-center justify-center rounded-xl bg-sky-50 p-6 text-center">
@@ -665,12 +632,9 @@ function AgendaPage() {
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100">
                 <Stethoscope className="h-6 w-6 text-sky-700" />
               </div>
-              <h2 className="text-lg font-black text-gray-900">
-                Médico não vinculado
-              </h2>
+              <h2 className="text-lg font-black text-gray-900">Médico não vinculado</h2>
               <p className="mt-2 text-sm text-gray-600">
-                Para visualizar a agenda médica, vincule este usuário ao cadastro
-                do médico.
+                Para visualizar a agenda médica, vincule este usuário ao cadastro do médico.
               </p>
             </div>
           </div>
@@ -683,6 +647,7 @@ function AgendaPage() {
             dataSelecionada={dataSelecionadaAbaTodosMedicos}
             setDataSelecionada={setDataSelecionadaAbaTodosMedicos}
             disponibilidades={disponibilidades}
+            statusFiltro={statusFiltro}
             onAbrirAgendamento={abrirModalAtendimento}
             onAbrirLivre={abrirCadastroAgendamentoLivre}
             onAbrirDisponibilidade={abrirCadastroDisponibilidade}

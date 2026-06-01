@@ -68,6 +68,18 @@ function AgendaSlotsLista({
                 'Paciente'}
             </p>
 
+            <p className="text-[11px] font-semibold text-green-700">
+                Valor:{' '}
+                {Number(
+                  slot.agendamento.valorCobrado ||
+                  slot.agendamento.procedimento?.valor ||
+                  0
+                ).toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
+            </p>
+
             <p className="mt-0.5 line-clamp-1 break-words text-[12px] font-semibold leading-tight text-gray-600">
               <b>Procedimento: </b>
               {slot.agendamento.procedimento?.nome ||

@@ -1,7 +1,6 @@
 // src/components/agenda/AgendaPorAbasDias.jsx
 import AgendaTabelaMedicos from './AgendaTabelaMedicos';
-import { formatarDataInput } from './utils/agendaFormatters';
-import { montarDataDoInput } from './utils/agendaFormatters';
+import { formatarDataInput, montarDataDoInput } from './utils/agendaFormatters';
 
 function formatarAbaDia(dia) {
   const numeroDia = String(dia.getDate()).padStart(2, '0');
@@ -50,6 +49,7 @@ export default function AgendaPorAbasDias({
   dataSelecionada,
   setDataSelecionada,
   disponibilidades,
+  statusFiltro,
   onAbrirAgendamento,
   onAbrirLivre,
   onAbrirDisponibilidade,
@@ -100,6 +100,7 @@ export default function AgendaPorAbasDias({
           agendamentosDoDia={agendamentosDoDia}
           dataSelecionada={dataSelecionadaObjeto}
           disponibilidades={disponibilidades}
+          statusFiltro={statusFiltro}
           onAbrirAgendamento={onAbrirAgendamento}
           onAbrirLivre={onAbrirLivre}
           onAbrirDisponibilidade={onAbrirDisponibilidade}

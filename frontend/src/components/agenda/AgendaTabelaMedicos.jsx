@@ -2,17 +2,35 @@
 import { CalendarDays, Stethoscope } from 'lucide-react';
 import AgendaSlotsLista from './AgendaSlotsLista';
 import { formatarDataLonga } from './utils/agendaFormatters';
+import { normalizarStatus } from './utils/agendaStatus';
 import {
   disponibilidadeValeParaData,
   gerarSlotsDoMedicoPorDia,
   obterTemplateColunasTodosMedicos,
 } from './utils/agendaSlots';
 
+function filtrarSlotsPorStatus(slots, statusFiltro) {
+  const statusNormalizado = normalizarStatus(statusFiltro);
+
+  if (!statusNormalizado) return slots;
+
+  if (statusNormalizado === 'livre') {
+    return slots.filter((slot) => !slot.agendamento);
+  }
+
+  return slots.filter(
+    (slot) =>
+      slot.agendamento &&
+      normalizarStatus(slot.agendamento.status) === statusNormalizado
+  );
+}
+
 export default function AgendaTabelaMedicos({
   medicos,
   agendamentosDoDia,
   dataSelecionada,
   disponibilidades,
+  statusFiltro,
   onAbrirAgendamento,
   onAbrirLivre,
   onAbrirDisponibilidade,
@@ -109,6 +127,8 @@ export default function AgendaTabelaMedicos({
                   disponibilidades
                 );
 
+                const slotsFiltrados = filtrarSlotsPorStatus(slots, statusFiltro);
+
                 return (
                   <div
                     key={medico.id}
@@ -117,8 +137,12 @@ export default function AgendaTabelaMedicos({
                     <AgendaSlotsLista
                       medico={medico}
                       dia={dataSelecionada}
-                      slots={slots}
-                      textoVazio="Nenhuma disponibilidade neste dia"
+                      slots={slotsFiltrados}
+                      textoVazio={
+                        normalizarStatus(statusFiltro) === 'livre'
+                          ? 'Nenhum horário livre neste dia'
+                          : 'Nenhuma disponibilidade neste dia'
+                      }
                       onAbrirAgendamento={onAbrirAgendamento}
                       onAbrirLivre={onAbrirLivre}
                       onAbrirDisponibilidade={onAbrirDisponibilidade}
