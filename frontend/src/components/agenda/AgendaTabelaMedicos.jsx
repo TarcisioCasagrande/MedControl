@@ -59,7 +59,7 @@ export default function AgendaTabelaMedicos({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+      <div className="min-h-0 flex-1 overflow-auto">
         {listaMedicos.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-gray-500">
             Nenhum médico cadastrado.
@@ -67,7 +67,7 @@ export default function AgendaTabelaMedicos({
         ) : (
           <>
             <div
-              className="sticky top-0 z-10 grid w-full bg-white shadow-sm"
+              className="sticky top-0 z-10 grid w-full min-w-full bg-white shadow-sm"
               style={{
                 gridTemplateColumns: obterTemplateColunasTodosMedicos(totalColunas),
               }}
@@ -96,7 +96,7 @@ export default function AgendaTabelaMedicos({
             </div>
 
             <div
-              className="grid w-full"
+              className="grid w-full min-w-full"
               style={{
                 gridTemplateColumns: obterTemplateColunasTodosMedicos(totalColunas),
               }}

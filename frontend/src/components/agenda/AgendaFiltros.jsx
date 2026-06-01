@@ -11,13 +11,17 @@ function AgendaFiltros({
   alterarMedicoFiltro,
   dataReferencia,
   dataFiltroTodosMedicos,
+  dataFinalTodosMedicos,
   alterarDiaAgenda,
+  alterarDataFinalTodosMedicos,
   limparFiltros,
   carregarDados,
   loading,
   usuarioEhMedico,
   medicosVisiveis,
 }) {
+  const mostrandoTodosMedicos = !usuarioEhMedico && !medicoFiltro;
+
   return (
     <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
       <div className="flex min-w-0 items-center gap-3">
@@ -37,7 +41,11 @@ function AgendaFiltros({
         </div>
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5 xl:max-w-5xl">
+      <div
+        className={`grid w-full grid-cols-1 gap-2 sm:grid-cols-2 ${
+          mostrandoTodosMedicos ? 'lg:grid-cols-6 xl:max-w-6xl' : 'lg:grid-cols-5 xl:max-w-5xl'
+        }`}
+      >
         <div className="relative lg:col-span-2">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -84,10 +92,21 @@ function AgendaFiltros({
 
         <input
           type="date"
+          title={mostrandoTodosMedicos ? 'Data inicial' : 'Data'}
           value={medicoFiltro ? formatarDataInput(dataReferencia) : dataFiltroTodosMedicos}
           onChange={(e) => alterarDiaAgenda(e.target.value)}
           className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
         />
+
+        {mostrandoTodosMedicos && (
+          <input
+            type="date"
+            title="Data final"
+            value={dataFinalTodosMedicos}
+            onChange={(e) => alterarDataFinalTodosMedicos(e.target.value)}
+            className="h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-xs outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+          />
+        )}
       </div>
 
       <div className="flex shrink-0 items-center gap-2">

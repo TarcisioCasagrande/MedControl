@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/MeuCrud.Api.props" />
-</Project>

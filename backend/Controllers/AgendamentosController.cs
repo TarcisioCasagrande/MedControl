@@ -12,11 +12,8 @@ namespace MeuCrud.Api.Controllers
     [Route("api/agendamentos")]
     public class AgendamentosController : ControllerBase
     {
-        // Contexto do Entity Framework usado para acessar o banco de dados.
         private readonly AppDbContext _context;
 
-        // Status aceitos oficialmente pelo fluxo de agendamentos.
-        // A função NormalizarStatus usa essa lista para impedir status inválido.
         private static readonly string[] StatusValidos =
         {
             "Agendado",
@@ -31,12 +28,9 @@ namespace MeuCrud.Api.Controllers
             _context = context;
         }
 
-        // Lista os agendamentos.
-        // Admin/Recepção enxergam tudo.
-        // Médico enxerga apenas os próprios agendamentos vinculados ao usuário logado.
         [Authorize]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Agendamento>>> Listar()
+        public async Task<ActionResult> Listar()
         {
             var query = QueryCompleta();
 
@@ -52,25 +46,84 @@ namespace MeuCrud.Api.Controllers
 
             var agendamentos = await query
                 .OrderBy(a => a.DataAgendamento)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.DataAgendamento,
+                    a.Status,
+                    a.MotivoAgendamento,
+                    a.Observacoes,
+                    a.TipoAtendimento,
+                    a.ValorCobrado,
+                    a.DataCadastro,
+                    a.DataAtualizacao,
+                    a.DataInicioAtendimento,
+                    a.DataFimAtendimento,
+
+                    a.MedicoId,
+                    MedicoNome = a.Medico != null ? a.Medico.Nome : null,
+                    MedicoEspecialidade = a.Medico != null ? a.Medico.Especialidade : null,
+                    Medico = a.Medico == null ? null : new
+                    {
+                        a.Medico.Id,
+                        a.Medico.Nome,
+                        a.Medico.CRM,
+                        a.Medico.Especialidade,
+                        a.Medico.Telefone,
+                        a.Medico.Email
+                    },
+
+                    a.PacienteId,
+                    PacienteNome = a.Paciente != null ? a.Paciente.Nome : null,
+                    PacienteTelefone = a.Paciente != null ? a.Paciente.Telefone : null,
+                    Paciente = a.Paciente == null ? null : new
+                    {
+                        a.Paciente.Id,
+                        a.Paciente.Nome,
+                        a.Paciente.CPF,
+                        a.Paciente.Telefone,
+                        a.Paciente.Email,
+                        a.Paciente.DataNascimento
+                    },
+
+                    a.ProcedimentoId,
+                    ProcedimentoNome = a.Procedimento != null ? a.Procedimento.Nome : null,
+                    ProcedimentoValor = a.Procedimento != null ? a.Procedimento.Valor : 0,
+                    Procedimento = a.Procedimento == null ? null : new
+                    {
+                        a.Procedimento.Id,
+                        a.Procedimento.Nome,
+                        a.Procedimento.Codigo,
+                        a.Procedimento.Valor,
+                        a.Procedimento.Ativo
+                    },
+
+                    a.CriadoPorUsuarioId,
+                    CriadoPorUsuarioNome = a.CriadoPorUsuario != null ? a.CriadoPorUsuario.Nome : null,
+
+                    PagamentoId = a.Pagamento != null ? a.Pagamento.Id : (int?)null,
+                    PagamentoStatus = a.Pagamento != null ? a.Pagamento.StatusPagamento : null,
+                    PagamentoValor = a.Pagamento != null ? a.Pagamento.Valor : 0,
+
+                    TemProntuario = a.Prontuario != null
+                })
                 .ToListAsync();
 
             return Ok(agendamentos);
         }
 
-        // Atalho para o médico listar seus próprios agendamentos.
         [Authorize(Roles = "Medico")]
         [HttpGet("meus")]
-        public async Task<ActionResult<IEnumerable<Agendamento>>> MeusAgendamentos(
+        public async Task<ActionResult> MeusAgendamentos(
             [FromQuery] string? status = null,
             [FromQuery] DateTime? data = null)
         {
             return await ListarDoMedicoLogado(status, data);
         }
 
-        // Lista agendamentos do médico logado, permitindo filtrar por status e por data.
         [Authorize(Roles = "Medico")]
         [HttpGet("medico-logado")]
-        public async Task<ActionResult<IEnumerable<Agendamento>>> ListarDoMedicoLogado(
+        public async Task<ActionResult> ListarDoMedicoLogado(
             [FromQuery] string? status = null,
             [FromQuery] DateTime? data = null)
         {
@@ -94,7 +147,6 @@ namespace MeuCrud.Api.Controllers
 
             if (data.HasValue)
             {
-                // Converte a data local para UTC para comparar corretamente com o banco.
                 var inicio = DateTime.SpecifyKind(data.Value.Date, DateTimeKind.Local).ToUniversalTime();
                 var fim = inicio.AddDays(1);
 
@@ -103,38 +155,165 @@ namespace MeuCrud.Api.Controllers
 
             var agendamentos = await query
                 .OrderBy(a => a.DataAgendamento)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.DataAgendamento,
+                    a.Status,
+                    a.MotivoAgendamento,
+                    a.Observacoes,
+                    a.TipoAtendimento,
+                    a.ValorCobrado,
+                    a.DataInicioAtendimento,
+                    a.DataFimAtendimento,
+
+                    a.MedicoId,
+                    MedicoNome = a.Medico != null ? a.Medico.Nome : null,
+                    MedicoEspecialidade = a.Medico != null ? a.Medico.Especialidade : null,
+                    Medico = a.Medico == null ? null : new
+                    {
+                        a.Medico.Id,
+                        a.Medico.Nome,
+                        a.Medico.CRM,
+                        a.Medico.Especialidade,
+                        a.Medico.Telefone,
+                        a.Medico.Email
+                    },
+
+                    a.PacienteId,
+                    PacienteNome = a.Paciente != null ? a.Paciente.Nome : null,
+                    PacienteTelefone = a.Paciente != null ? a.Paciente.Telefone : null,
+                    Paciente = a.Paciente == null ? null : new
+                    {
+                        a.Paciente.Id,
+                        a.Paciente.Nome,
+                        a.Paciente.CPF,
+                        a.Paciente.Telefone,
+                        a.Paciente.Email,
+                        a.Paciente.DataNascimento
+                    },
+
+                    a.ProcedimentoId,
+                    ProcedimentoNome = a.Procedimento != null ? a.Procedimento.Nome : null,
+                    ProcedimentoValor = a.Procedimento != null ? a.Procedimento.Valor : 0,
+                    Procedimento = a.Procedimento == null ? null : new
+                    {
+                        a.Procedimento.Id,
+                        a.Procedimento.Nome,
+                        a.Procedimento.Codigo,
+                        a.Procedimento.Valor,
+                        a.Procedimento.Ativo
+                    },
+
+                    a.CriadoPorUsuarioId,
+                    CriadoPorUsuarioNome = a.CriadoPorUsuario != null ? a.CriadoPorUsuario.Nome : null,
+
+                    PagamentoId = a.Pagamento != null ? a.Pagamento.Id : (int?)null,
+                    PagamentoStatus = a.Pagamento != null ? a.Pagamento.StatusPagamento : null,
+                    PagamentoValor = a.Pagamento != null ? a.Pagamento.Valor : 0,
+
+                    TemProntuario = a.Prontuario != null
+                })
                 .ToListAsync();
 
             return Ok(agendamentos);
         }
 
-        // Busca um agendamento pelo ID com todos os relacionamentos principais.
         [Authorize]
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Agendamento>> BuscarPorId(int id)
+        public async Task<ActionResult> BuscarPorId(int id)
         {
-            var agendamento = await QueryCompleta()
+            var agendamentoOriginal = await _context.Agendamentos
+                .AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == id);
 
-            if (agendamento == null)
+            if (agendamentoOriginal == null)
                 return NotFound(new { mensagem = "Agendamento não encontrado." });
 
             if (User.IsInRole("Medico"))
             {
-                var podeAcessar = await MedicoPodeAcessarAgendamento(agendamento.MedicoId);
+                var podeAcessar = await MedicoPodeAcessarAgendamento(agendamentoOriginal.MedicoId);
 
                 if (!podeAcessar)
                     return Forbid();
             }
 
+            var agendamento = await QueryCompleta()
+                .Where(a => a.Id == id)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.DataAgendamento,
+                    a.Status,
+                    a.MotivoAgendamento,
+                    a.Observacoes,
+                    a.TipoAtendimento,
+                    a.ValorCobrado,
+                    a.DataCadastro,
+                    a.DataAtualizacao,
+                    a.DataInicioAtendimento,
+                    a.DataFimAtendimento,
+
+                    a.MedicoId,
+                    MedicoNome = a.Medico != null ? a.Medico.Nome : null,
+                    MedicoEspecialidade = a.Medico != null ? a.Medico.Especialidade : null,
+                    Medico = a.Medico == null ? null : new
+                    {
+                        a.Medico.Id,
+                        a.Medico.Nome,
+                        a.Medico.CRM,
+                        a.Medico.Especialidade,
+                        a.Medico.Telefone,
+                        a.Medico.Email
+                    },
+
+                    a.PacienteId,
+                    PacienteNome = a.Paciente != null ? a.Paciente.Nome : null,
+                    PacienteTelefone = a.Paciente != null ? a.Paciente.Telefone : null,
+                    PacienteEmail = a.Paciente != null ? a.Paciente.Email : null,
+                    Paciente = a.Paciente == null ? null : new
+                    {
+                        a.Paciente.Id,
+                        a.Paciente.Nome,
+                        a.Paciente.CPF,
+                        a.Paciente.Telefone,
+                        a.Paciente.Email,
+                        a.Paciente.DataNascimento,
+                        a.Paciente.TipoSanguineo,
+                        a.Paciente.Alergias,
+                        a.Paciente.DoencasPreExistentes
+                    },
+
+                    a.ProcedimentoId,
+                    ProcedimentoNome = a.Procedimento != null ? a.Procedimento.Nome : null,
+                    ProcedimentoValor = a.Procedimento != null ? a.Procedimento.Valor : 0,
+                    Procedimento = a.Procedimento == null ? null : new
+                    {
+                        a.Procedimento.Id,
+                        a.Procedimento.Nome,
+                        a.Procedimento.Codigo,
+                        a.Procedimento.Valor,
+                        a.Procedimento.Ativo
+                    },
+
+                    a.CriadoPorUsuarioId,
+                    CriadoPorUsuarioNome = a.CriadoPorUsuario != null ? a.CriadoPorUsuario.Nome : null,
+
+                    PagamentoId = a.Pagamento != null ? a.Pagamento.Id : (int?)null,
+                    PagamentoStatus = a.Pagamento != null ? a.Pagamento.StatusPagamento : null,
+                    PagamentoValor = a.Pagamento != null ? a.Pagamento.Valor : 0,
+                    PagamentoForma = a.Pagamento != null ? a.Pagamento.FormaPagamento : null,
+
+                    TemProntuario = a.Prontuario != null
+                })
+                .FirstOrDefaultAsync();
+
             return Ok(agendamento);
         }
 
-        // Cria um novo agendamento.
-        // Antes de salvar, valida médico, paciente, procedimento, conflito de horário e disponibilidade.
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<Agendamento>> Criar([FromBody] Agendamento agendamento)
+        public async Task<ActionResult> Criar([FromBody] Agendamento agendamento)
         {
             var validacao = await ValidarAgendamento(agendamento);
 
@@ -157,14 +336,13 @@ namespace MeuCrud.Api.Controllers
             _context.Agendamentos.Add(agendamento);
             await _context.SaveChangesAsync();
 
-            var salvo = await QueryCompleta()
-                .FirstAsync(a => a.Id == agendamento.Id);
-
-            return CreatedAtAction(nameof(BuscarPorId), new { id = salvo.Id }, salvo);
+            return CreatedAtAction(nameof(BuscarPorId), new { id = agendamento.Id }, new
+            {
+                mensagem = "Agendamento criado com sucesso.",
+                agendamento.Id
+            });
         }
 
-        // Atualiza um agendamento existente.
-        // Mantém validação de acesso para médico e validação de regras de negócio.
         [Authorize]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Atualizar(int id, [FromBody] Agendamento dados)
@@ -207,7 +385,6 @@ namespace MeuCrud.Api.Controllers
             return NoContent();
         }
 
-        // Altera o status do agendamento recebendo o status pelo DTO.
         [Authorize]
         [HttpPut("{id:int}/alterar-status")]
         public async Task<IActionResult> AlterarStatus(int id, [FromBody] AlterarStatusAgendamentoDto dto)
@@ -215,7 +392,6 @@ namespace MeuCrud.Api.Controllers
             return await AtualizarStatus(id, dto.Status);
         }
 
-        // Marca o agendamento como atendido pela recepção.
         [Authorize]
         [HttpPut("{id:int}/atender-recepcao")]
         public async Task<IActionResult> AtenderRecepcao(int id)
@@ -223,8 +399,6 @@ namespace MeuCrud.Api.Controllers
             return await AtualizarStatus(id, "AtendidoRecepcao");
         }
 
-        // Inicia o atendimento médico.
-        // Só médico pode executar e apenas se o agendamento já foi liberado pela recepção.
         [Authorize(Roles = "Medico")]
         [HttpPut("{id:int}/iniciar-atendimento")]
         public async Task<IActionResult> IniciarAtendimento(int id)
@@ -256,11 +430,15 @@ namespace MeuCrud.Api.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(agendamento);
+            return Ok(new
+            {
+                mensagem = "Atendimento iniciado com sucesso.",
+                agendamento.Id,
+                agendamento.Status,
+                agendamento.DataInicioAtendimento
+            });
         }
 
-        // Finaliza o atendimento médico.
-        // Exige prontuário criado antes de finalizar.
         [Authorize(Roles = "Medico")]
         [HttpPut("{id:int}/finalizar-atendimento")]
         public async Task<IActionResult> FinalizarAtendimento(int id)
@@ -291,10 +469,15 @@ namespace MeuCrud.Api.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(agendamento);
+            return Ok(new
+            {
+                mensagem = "Atendimento finalizado com sucesso.",
+                agendamento.Id,
+                agendamento.Status,
+                agendamento.DataFimAtendimento
+            });
         }
 
-        // Cancela um agendamento.
         [Authorize]
         [HttpPut("{id:int}/cancelar")]
         public async Task<IActionResult> Cancelar(int id)
@@ -302,10 +485,6 @@ namespace MeuCrud.Api.Controllers
             return await AtualizarStatus(id, "Cancelado");
         }
 
-        // Exclui um agendamento.
-        // REGRA NOVA:
-        // - Se existir pagamento vinculado com StatusPagamento = "Pago", não permite excluir.
-        // - Essa validação fica no backend porque é regra crítica de negócio/financeiro.
         [Authorize]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Excluir(int id)
@@ -340,11 +519,10 @@ namespace MeuCrud.Api.Controllers
             return NoContent();
         }
 
-        // Monta a consulta completa de agendamentos com relacionamentos.
-        // Usada nos GETs para retornar informações de médico, paciente, procedimento, pagamento, prontuário e usuário criador.
         private IQueryable<Agendamento> QueryCompleta()
         {
             return _context.Agendamentos
+                .AsNoTracking()
                 .Include(a => a.Medico)
                 .Include(a => a.Paciente)
                 .Include(a => a.Procedimento)
@@ -353,8 +531,6 @@ namespace MeuCrud.Api.Controllers
                 .Include(a => a.CriadoPorUsuario);
         }
 
-        // Centraliza a troca de status do agendamento.
-        // Também preenche datas automáticas quando inicia ou finaliza atendimento.
         private async Task<IActionResult> AtualizarStatus(int id, string status)
         {
             var agendamento = await _context.Agendamentos.FindAsync(id);
@@ -383,10 +559,16 @@ namespace MeuCrud.Api.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(agendamento);
+            return Ok(new
+            {
+                mensagem = "Status atualizado com sucesso.",
+                agendamento.Id,
+                agendamento.Status,
+                agendamento.DataInicioAtendimento,
+                agendamento.DataFimAtendimento
+            });
         }
 
-        // Obtém o ID do usuário logado a partir das claims do token JWT.
         private int? ObterUsuarioIdLogado()
         {
             var usuarioIdTexto =
@@ -401,8 +583,6 @@ namespace MeuCrud.Api.Controllers
             return null;
         }
 
-        // Localiza o médico vinculado ao usuário logado.
-        // Primeiro tenta pelo UsuarioId; se não encontrar, tenta pelo e-mail.
         private async Task<Medico?> ObterMedicoLogado()
         {
             var usuarioId = ObterUsuarioIdLogado();
@@ -417,15 +597,12 @@ namespace MeuCrud.Api.Controllers
                 );
         }
 
-        // Verifica se o médico logado é o dono do agendamento.
         private async Task<bool> MedicoPodeAcessarAgendamento(int medicoId)
         {
             var medico = await ObterMedicoLogado();
             return medico != null && medico.Id == medicoId;
         }
 
-        // Valida as regras de criação/edição do agendamento.
-        // Aqui ficam as regras contra conflito de horário e disponibilidade médica.
         private async Task<(bool Valido, string Mensagem)> ValidarAgendamento(
             Agendamento agendamento,
             int? idIgnorar = null)
@@ -450,7 +627,6 @@ namespace MeuCrud.Api.Controllers
 
             var dataUtc = ParaUtc(agendamento.DataAgendamento);
 
-            // Não permite dois agendamentos ativos para o mesmo médico no mesmo horário.
             var medicoOcupado = await _context.Agendamentos.AnyAsync(a =>
                 a.Id != idIgnorar &&
                 a.MedicoId == agendamento.MedicoId &&
@@ -461,7 +637,6 @@ namespace MeuCrud.Api.Controllers
             if (medicoOcupado)
                 return (false, "O médico já possui agendamento neste horário.");
 
-            // Não permite o mesmo paciente em dois agendamentos ativos no mesmo horário.
             var pacienteOcupado = await _context.Agendamentos.AnyAsync(a =>
                 a.Id != idIgnorar &&
                 a.PacienteId == agendamento.PacienteId &&
@@ -472,7 +647,6 @@ namespace MeuCrud.Api.Controllers
             if (pacienteOcupado)
                 return (false, "O paciente já possui agendamento neste horário.");
 
-            // Se o médico possui disponibilidade cadastrada, o horário precisa estar dentro dela.
             var disponibilidadesDoMedico = await _context.DisponibilidadesMedico
                 .AnyAsync(d => d.MedicoId == agendamento.MedicoId && d.Ativo);
 
@@ -485,7 +659,6 @@ namespace MeuCrud.Api.Controllers
             return (true, string.Empty);
         }
 
-        // Verifica se a data/hora do agendamento está dentro da disponibilidade ativa do médico.
         private async Task<bool> EstaDentroDaDisponibilidade(int medicoId, DateTime dataHora)
         {
             var data = dataHora.Date;
@@ -503,9 +676,6 @@ namespace MeuCrud.Api.Controllers
             );
         }
 
-        // Define o valor cobrado:
-        // - Se o usuário informou valor manualmente, usa esse valor.
-        // - Caso contrário, usa o valor cadastrado no procedimento.
         private async Task<decimal> ObterValorCobrado(int? procedimentoId, decimal valorInformado)
         {
             if (valorInformado > 0)
@@ -520,7 +690,6 @@ namespace MeuCrud.Api.Controllers
                 .FirstOrDefaultAsync();
         }
 
-        // Converte datas locais para UTC antes de salvar/comparar no banco.
         private static DateTime ParaUtc(DateTime data)
         {
             if (data.Kind == DateTimeKind.Utc)
@@ -529,7 +698,6 @@ namespace MeuCrud.Api.Controllers
             return DateTime.SpecifyKind(data, DateTimeKind.Local).ToUniversalTime();
         }
 
-        // Padroniza status vindos do frontend ou de versões antigas do sistema.
         private static string NormalizarStatus(string? status, string fallback)
         {
             if (string.IsNullOrWhiteSpace(status))
